@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel CRM</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ffffff; --bg2: #f8f9fb; --bg3: #f0f2f5; --bg4: #e8eaed;
+  --border: #e5e7eb; --border2: #d1d5db;
+  --text: #111827; --text2: #6b7280; --text3: #9ca3af;
+  --green: #10b981; --green2: #059669; --greenBg: #ecfdf5;
+  --blue: #3b82f6; --blueBg: #eff6ff;
+  --amber: #f59e0b; --amberBg: #fffbeb;
+  --red: #ef4444; --redBg: #fef2f2;
+  --purple: #8b5cf6; --purpleBg: #f5f3ff;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow2: 0 4px 12px rgba(0,0,0,0.1);
+  --radius: 10px; --radius2: 14px;
+}
+[data-theme="dark"] {
+  --bg: #0f1117; --bg2: #161b27; --bg3: #1e2535; --bg4: #252d3d;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+  --text: #f0f2f8; --text2: #8892a4; --text3: #555f73;
+  --greenBg: rgba(16,185,129,0.1); --blueBg: rgba(59,130,246,0.1);
+  --amberBg: rgba(245,158,11,0.1); --redBg: rgba(239,68,68,0.1);
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .2s,color .2s}
+.screen{display:none}
+.screen.active{display:flex}
+
+/* LOGIN */
+#login{align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+.login-wrap{width:400px}
+.login-logo{font-size:26px;font-weight:700;text-align:center;margin-bottom:4px}
+.login-logo span{color:var(--green)}
+.login-sub{text-align:center;font-size:13px;color:var(--text2);margin-bottom:28px}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:32px;box-shadow:var(--shadow2)}
+.tabs{display:flex;background:var(--bg3);border-radius:var(--radius);padding:3px;margin-bottom:22px;gap:3px}
+.tab{flex:1;padding:8px;text-align:center;font-size:13px;font-weight:500;cursor:pointer;border-radius:8px;color:var(--text2);transition:all .2s}
+.tab.active{background:var(--bg);color:var(--text);box-shadow:var(--shadow)}
+.fg{margin-bottom:14px}
+.fl{font-size:12px;color:var(--text2);margin-bottom:5px;display:block;font-weight:500}
+.fi{width:100%;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.fi:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(16,185,129,0.1)}
+.fi::placeholder{color:var(--text3)}
+select.fi option{background:var(--bg)}
+textarea.fi{resize:vertical;min-height:70px}
+.btn-primary{width:100%;padding:11px;border-radius:var(--radius);border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-primary:hover{background:var(--green2);transform:translateY(-1px)}
+.err-msg{font-size:12px;color:var(--red);margin-top:10px;text-align:center;display:none;padding:8px;background:var(--redBg);border-radius:8px}
+.ok-msg{font-size:12px;color:var(--green);margin-top:10px;text-align:center;display:none;padding:8px;background:var(--greenBg);border-radius:8px}
+
+/* APP */
+#app{flex-direction:row;min-height:100vh}
+.sidebar{width:230px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:background .2s}
+.sidebar-top{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sidebar-logo{font-size:17px;font-weight:700}
+.sidebar-logo span{color:var(--green)}
+.theme-btn{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s}
+.theme-btn:hover{background:var(--bg4)}
+.nav-section{padding:14px 16px 4px;font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:13px;color:var(--text2);cursor:pointer;border-radius:8px;margin:1px 8px;transition:all .15s}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--greenBg);color:var(--green);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-bottom{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius);background:var(--bg3);cursor:default}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.av-g{background:rgba(16,185,129,0.15);color:var(--green)}
+.av-b{background:rgba(59,130,246,0.15);color:var(--blue)}
+.av-a{background:rgba(245,158,11,0.15);color:var(--amber)}
+.av-p{background:rgba(139,92,246,0.15);color:var(--purple)}
+.av-r{background:rgba(239,68,68,0.15);color:var(--red)}
+.user-name{font-size:12px;font-weight:600;color:var(--text)}
+.user-role{font-size:11px;color:var(--text3)}
+.logout-btn{margin-left:auto;cursor:pointer;color:var(--text3);transition:color .15s;padding:4px}
+.logout-btn:hover{color:var(--red)}
+
+.main{flex:1;overflow:auto;display:flex;flex-direction:column;min-width:0}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-title{font-size:15px;font-weight:600}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px;font-size:13px;color:var(--text2);cursor:text;min-width:200px}
+.search-box input{background:none;border:none;outline:none;font-size:13px;color:var(--text);font-family:'Inter',sans-serif;width:100%}
+.search-box input::placeholder{color:var(--text3)}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.btn{padding:7px 14px;border-radius:var(--radius);font-size:13px;cursor:pointer;border:1px solid var(--border2);background:var(--bg);color:var(--text);display:inline-flex;align-items:center;gap:6px;transition:all .15s;font-family:'Inter',sans-serif;font-weight:500;white-space:nowrap}
+.btn:hover{background:var(--bg3)}
+.btn.green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.green:hover{background:var(--green2)}
+.btn svg{width:15px;height:15px;flex-shrink:0}
+
+.content{padding:20px;flex:1}
+
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:14px 16px;box-shadow:var(--shadow)}
+.stat-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-val{font-size:22px;font-weight:700;color:var(--text)}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.stat-sub.up{color:var(--green)}
+
+/* Kanban */
+.kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.kol{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:10px;min-height:420px}
+.kol-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:2px 2px 8px;border-bottom:1px solid var(--border)}
+.kol-title{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+.kol-dot{width:8px;height:8px;border-radius:50%}
+.kol-count{font-size:11px;padding:2px 7px;border-radius:20px;background:var(--bg3);color:var(--text2);font-weight:500}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.card:hover{border-color:var(--green);box-shadow:0 2px 8px rgba(16,185,129,0.15);transform:translateY(-1px)}
+.card-name{font-size:13px;font-weight:600;margin-bottom:3px;color:var(--text)}
+.card-tour{font-size:11px;color:var(--text2);margin-bottom:6px}
+.card-foot{display:flex;justify-content:space-between;align-items:center}
+.card-price{font-size:12px;font-weight:700;color:var(--green)}
+.card-src{font-size:10px;color:var(--text3);background:var(--bg3);padding:2px 6px;border-radius:4px}
+.prio-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;flex-shrink:0}
+.p-hot{background:var(--red)}.p-warm{background:var(--amber)}.p-cold{background:var(--blue)}
+
+/* Lead detail panel */
+.detail-panel{position:fixed;top:0;right:-520px;width:500px;height:100vh;background:var(--bg2);border-left:1px solid var(--border);box-shadow:-4px 0 20px rgba(0,0,0,0.1);z-index:300;transition:right .3s ease;display:flex;flex-direction:column;overflow:hidden}
+.detail-panel.open{right:0}
+.dp-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.dp-title{font-size:15px;font-weight:600}
+.dp-close{cursor:pointer;color:var(--text2);padding:4px;border-radius:6px;transition:all .15s}
+.dp-close:hover{background:var(--bg3);color:var(--text)}
+.dp-body{flex:1;overflow-y:auto;padding:16px 20px}
+.dp-section{margin-bottom:20px}
+.dp-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.dp-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dp-info-item{background:var(--bg3);border-radius:8px;padding:10px 12px}
+.dp-info-label{font-size:10px;color:var(--text3);margin-bottom:3px;font-weight:500}
+.dp-info-val{font-size:13px;font-weight:500;color:var(--text)}
+.stage-select{width:100%;padding:8px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;cursor:pointer}
+.stage-select:focus{border-color:var(--green)}
+
+/* Chat */
+.chat-wrap{background:var(--bg3);border-radius:var(--radius);overflow:hidden}
+.chat-msgs{max-height:260px;overflow-y:auto;padding:12px}
+.chat-msg{display:flex;gap:8px;margin-bottom:12px}
+.chat-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;margin-top:2px}
+.chat-bubble{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;max-width:85%}
+.chat-bubble.call{border-left:3px solid var(--blue)}
+.chat-bubble.task{border-left:3px solid var(--amber)}
+.chat-author{font-size:11px;font-weight:600;color:var(--text);margin-bottom:3px}
+.chat-text{font-size:12px;color:var(--text2);line-height:1.4}
+.chat-time{font-size:10px;color:var(--text3);margin-top:3px}
+.chat-type-badge{font-size:10px;padding:1px 6px;border-radius:4px;margin-left:4px}
+.tb-call{background:var(--blueBg);color:var(--blue)}
+.tb-task{background:var(--amberBg);color:var(--amber)}
+.tb-comment{background:var(--greenBg);color:var(--green)}
+.chat-input-wrap{border-top:1px solid var(--border);padding:10px;display:flex;gap:8px;align-items:flex-end;background:var(--bg2)}
+.chat-type-sel{padding:6px 8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none}
+.chat-input{flex:1;padding:7px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;resize:none;min-height:34px;max-height:80px}
+.chat-input:focus{border-color:var(--green)}
+.chat-send{padding:7px 12px;border-radius:8px;background:var(--green);color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:500;flex-shrink:0}
+.chat-send:hover{background:var(--green2)}
+
+/* Tasks */
+.task-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;transition:all .15s}
+.task-item:hover{border-color:var(--border2)}
+.task-cb{width:18px;height:18px;border-radius:5px;border:2px solid var(--border2);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.task-cb.done{background:var(--green);border-color:var(--green)}
+.task-body{flex:1;min-width:0}
+.task-title{font-size:13px;color:var(--text);font-weight:500}
+.task-title.done{text-decoration:line-through;color:var(--text3)}
+.task-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.task-due{font-size:11px;color:var(--text3);flex-shrink:0}
+.task-due.over{color:var(--red)}
+
+/* All tasks page */
+.tasks-filter{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-btn{padding:5px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-family:'Inter',sans-serif;transition:all .15s}
+.filter-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* List */
+.list-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden}
+.list-table{width:100%;border-collapse:collapse}
+.list-table th{font-size:11px;color:var(--text3);font-weight:600;text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg3);text-transform:uppercase;letter-spacing:.4px}
+.list-table td{font-size:13px;padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+.list-table tr:last-child td{border-bottom:none}
+.list-table tr:hover td{background:var(--bg3)}
+.list-table tr{cursor:pointer}
+.sbadge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
+.s-new{background:var(--greenBg);color:var(--green)}
+.s-contact{background:var(--blueBg);color:var(--blue)}
+.s-offer{background:var(--amberBg);color:var(--amber)}
+.s-deal{background:rgba(16,185,129,0.15);color:#059669}
+.s-lost{background:var(--redBg);color:var(--red)}
+
+/* Employees */
+.emp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.emp-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.emp-card:hover{border-color:var(--green);transform:translateY(-1px);box-shadow:0 4px 12px rgba(16,185,129,0.1)}
+.emp-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.emp-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+.emp-name{font-size:13px;font-weight:600}
+.emp-phone{font-size:11px;color:var(--text3)}
+.emp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.emp-stat{background:var(--bg3);border-radius:8px;padding:8px;text-align:center}
+.emp-stat-val{font-size:16px;font-weight:700}
+.emp-stat-lbl{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* Stats charts */
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:18px;box-shadow:var(--shadow)}
+.chart-title{font-size:13px;font-weight:600;margin-bottom:14px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.bar-lbl{font-size:12px;color:var(--text2);width:85px;text-align:right;flex-shrink:0}
+.bar-track{flex:1;height:10px;background:var(--bg3);border-radius:20px;overflow:hidden}
+.bar-fill{height:100%;border-radius:20px;transition:width .7s ease}
+.bar-val{font-size:11px;color:var(--text3);width:30px}
+.funnel-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.funnel-row:last-child{border:none}
+
+/* Modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:18px;padding:24px;width:380px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow2)}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{cursor:pointer;color:var(--text2);font-size:20px;line-height:1;transition:color .15s;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.modal-close:hover{background:var(--bg3);color:var(--text)}
+
+/* Back */
+.back{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:16px;padding:6px 10px;border-radius:8px;transition:all .15s}
+.back:hover{background:var(--bg3);color:var(--text)}
+
+/* Notif */
+.notif{position:fixed;bottom:20px;right:20px;padding:12px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;transform:translateY(20px);opacity:0;transition:all .3s;box-shadow:var(--shadow2)}
+.notif.show{transform:translateY(0);opacity:1}
+.notif.success{background:var(--green);color:#fff}
+.notif.error{background:var(--red);color:#fff}
+
+.loading{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--text2);font-size:13px;gap:10px}
+.spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:60px;color:var(--text3);font-size:13px}
+.empty-icon{font-size:36px;margin-bottom:10px}
+
+.detail-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:299;backdrop-filter:blur(2px)}
+.detail-overlay.open{display:block}
+
+/* Add task form in panel */
+.add-task-form{background:var(--bg3);border-radius:var(--radius);padding:10px;margin-top:8px;display:none}
+.add-task-form.open{display:block}
+.form-row{display:flex;gap:8px}
+</style>
+</head>
+<body>
+
+<div id="login" class="screen active">
+  <div class="login-wrap">
+    <div class="login-logo">Travel<span>CRM</span></div>
+    <div class="login-sub">Tur agentlik boshqaruv tizimi</div>
+    <div class="login-box">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('signin')">Kirish</div>
+        <div class="tab" onclick="switchTab('signup')">Ro'yxatdan o'tish</div>
+      </div>
+      <div id="signin-form">
+        <div class="fg"><label class="fl">Email</label><input class="fi" id="si-email" type="email" placeholder="email@example.com"></div>
+        <div class="fg"><label class="fl">Parol</label><input class="fi" id="si-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')signIn()"></div>
+        <button class="btn-primary" onclick="signIn()">Kirish →</button>
+      </div>
+      <div id="signup-form" style="display:none">
+        <div class="fg"><label class="fl">To'liq ism</label><input class="fi" id="su-name" placeholder="Ismingiz Familiyangiz"></div>
+        <div class="fg"><label class="fl">Telefon</label><input class="fi" id="su-phone" placeholder="+998 90 000 00 00"></div>
+        <div class="fg"><label class="fl">Email</label><input class="fi" id="su-email" type="email" placeholder="email@example.com"></div>
+        <div class="fg"><label class="fl">Parol</label><input class="fi" id="su-pass" type="password" placeholder="Kamida 6 belgi"></div>
+        <button class="btn-primary" onclick="signUp()">Ro'yxatdan o'tish →</button>
+      </div>
+      <div class="err-msg" id="auth-err"></div>
+      <div class="ok-msg" id="auth-ok"></div>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="screen">
+  <div class="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-logo">Travel<span>CRM</span></div>
+      <div class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</div>
+    </div>
+    <div id="nav-menu"></div>
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="av av-g" id="ui-av"></div>
+        <div style="min-width:0">
+          <div class="user-name" id="ui-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+          <div class="user-role" id="ui-role"></div>
+        </div>
+        <div class="logout-btn" onclick="signOut()" title="Chiqish">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="page-title">Voronka</div>
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="search-input" placeholder="Qidirish..." oninput="onSearch(this.value)">        </div>
+      </div>
+      <div class="topbar-actions" id="topbar-actions"></div>
+    </div>
+    <div class="content" id="main-content">
+      <div class="loading"><div class="spinner"></div> Yuklanmoqda...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Lead detail panel -->
+<div class="detail-overlay" id="detail-overlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detail-panel">
+  <div class="dp-header">
+    <div class="dp-title" id="dp-title">Lid ma'lumotlari</div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div onclick="openEditLid()" style="cursor:pointer;padding:5px 10px;border-radius:7px;font-size:12px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);transition:all .15s" title="Tahrirlash">✏️</div>
+      <div onclick="deleteLid()" style="cursor:pointer;padding:5px 10px;border-radius:7px;font-size:12px;background:var(--redBg);color:var(--red);border:1px solid var(--red);transition:all .15s" title="O'chirish">🗑️</div>
+      <div class="dp-close" onclick="closeDetail()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="dp-body" id="dp-body"></div>
+</div>
+
+<!-- Edit Lid Modal -->
+<div class="overlay" id="edit-modal" onclick="closeModalOut(event,'edit-modal')">
+  <div class="modal">
+    <div class="modal-title">Lidni tahrirlash <span class="modal-close" onclick="closeModal('edit-modal')">×</span></div>
+    <div class="fg"><label class="fl">Ism Familiya *</label><input class="fi" id="ef-name" placeholder="Jasur Toshmatov"></div>
+    <div class="fg"><label class="fl">Telefon</label><input class="fi" id="ef-phone" placeholder="+998 90 000 00 00"></div>
+    <div class="fg"><label class="fl">Tur yo'nalishi</label>
+      <select class="fi" id="ef-tour"><option>Dubay тури</option><option>Turkiya тури</option><option>Misr тури</option><option>Maldiv тури</option><option>Tailand тури</option><option>Bali тури</option><option>Yevropa тури</option><option>Boshqa</option></select>
+    </div>
+    <div class="fg"><label class="fl">Byudjet ($)</label><input class="fi" id="ef-budget" type="number"></div>
+    <div class="fg"><label class="fl">Manba</label>
+      <select class="fi" id="ef-source"><option>Instagram</option><option>Telegram</option><option>Referral</option><option>Website</option><option>Boshqa</option></select>
+    </div>
+    <div class="fg"><label class="fl">Ustuvorlik</label>
+      <select class="fi" id="ef-priority"><option value="hot">🔴 Issiq</option><option value="warm">🟡 Iliq</option><option value="cold">🔵 Sovuq</option></select>
+    </div>
+    <div class="fg"><label class="fl">Izoh</label><textarea class="fi" id="ef-notes" rows="2"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn" style="flex:1" onclick="closeModal('edit-modal')">Bekor</button>
+      <button class="btn green" style="flex:1" onclick="saveLidEdit()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Lid Modal -->
+<div class="overlay" id="lid-modal" onclick="closeModalOut(event,'lid-modal')">
+  <div class="modal">
+    <div class="modal-title">Yangi lid <span class="modal-close" onclick="closeModal('lid-modal')">×</span></div>
+    <div class="fg"><label class="fl">Ism Familiya *</label><input class="fi" id="f-name" placeholder="Jasur Toshmatov"></div>
+    <div class="fg"><label class="fl">Telefon</label><input class="fi" id="f-phone" placeholder="+998 90 000 00 00"></div>
+    <div class="fg"><label class="fl">Tur yo'nalishi</label>
+      <select class="fi" id="f-tour"><option>Dubay тури</option><option>Turkiya тури</option><option>Misr тури</option><option>Maldiv тури</option><option>Tailand тури</option><option>Bali тури</option><option>Yevropa тури</option><option>Boshqa</option></select>
+    </div>
+    <div class="fg"><label class="fl">Byudjet ($)</label><input class="fi" id="f-budget" type="number" placeholder="2000"></div>
+    <div class="fg"><label class="fl">Manba</label>
+      <select class="fi" id="f-source"><option>Instagram</option><option>Telegram</option><option>Referral</option><option>Website</option><option>Boshqa</option></select>
+    </div>
+    <div class="fg"><label class="fl">Ustuvorlik</label>
+      <select class="fi" id="f-priority"><option value="hot">🔴 Issiq</option><option value="warm" selected>🟡 Iliq</option><option value="cold">🔵 Sovuq</option></select>
+    </div>
+    <div id="admin-assign" style="display:none">
+      <div class="fg"><label class="fl">Hodimga biriktirish</label><select class="fi" id="f-assign"></select></div>
+    </div>
+    <div class="fg"><label class="fl">Izoh</label><textarea class="fi" id="f-notes" placeholder="Qo'shimcha ma'lumot..."></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn" style="flex:1" onclick="closeModal('lid-modal')">Bekor</button>
+      <button class="btn green" style="flex:1" onclick="addLid()">Qo'shish</button>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+const SUPA_URL = 'https://wyoidilxdbtirzgaxipo.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5b2lkaWx4ZGJ0aXJ6Z2F4aXBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNTU5ODEsImV4cCI6MjA5NDgzMTk4MX0.TXioAlvrjIGjwQIYeqZIlOkIxdg_Q4hSq6mnAzU0xyc';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+const STAGES=[{id:'new',label:'Yangi',color:'#10b981'},{id:'contact',label:'Aloqa',color:'#3b82f6'},{id:'offer',label:'Taklif',color:'#f59e0b'},{id:'deal',label:'Bitim',color:'#059669'},{id:'lost',label:"Yo'qotildi",color:'#ef4444'}];
+const AVC=['av-g','av-b','av-a','av-p','av-r'];
+let CU=null,CP=null,page='kanban',allProfs=[],dragId=null,viewProf=null,openLead=null,isDark=false;
+
+function ini(n){return(n||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2)}
+function avc(id){return AVC[[...(id||'')].reduce((a,c)=>a+c.charCodeAt(0),0)%AVC.length]}
+function sLabel(s){return STAGES.find(x=>x.id===s)?.label||s}
+function sCls(s){return 's-'+s}
+function fmtDate(d){if(!d)return'—';const dt=new Date(d);const now=new Date();const diff=Math.floor((now-dt)/86400000);if(diff===0)return'Bugun';if(diff===1)return'Kecha';if(diff<7)return diff+' kun oldin';return dt.toLocaleDateString('uz-UZ')}
+function fmtDue(d){if(!d)return'';const dt=new Date(d);return dt.toLocaleDateString('uz-UZ')+' '+dt.toHours?.()||''}
+
+function notify(msg,type='success'){const el=document.getElementById('notif');el.textContent=msg;el.className='notif show '+type;setTimeout(()=>el.className='notif',3000)}
+
+function toggleTheme(){isDark=!isDark;document.documentElement.setAttribute('data-theme',isDark?'dark':'');document.getElementById('theme-btn').textContent=isDark?'☀️':'🌙';localStorage.setItem('theme',isDark?'dark':'')}
+if(localStorage.getItem('theme')==='dark'){isDark=true;document.documentElement.setAttribute('data-theme','dark');document.getElementById('theme-btn') && (document.getElementById('theme-btn').textContent='☀️')}
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',(t==='signin'&&i===0)||(t==='signup'&&i===1)));
+  document.getElementById('signin-form').style.display=t==='signin'?'block':'none';
+  document.getElementById('signup-form').style.display=t==='signup'?'block':'none';
+  document.getElementById('auth-err').style.display='none';
+  document.getElementById('auth-ok').style.display='none';
+}
+async function signIn(){
+  const email=document.getElementById('si-email').value.trim();
+  const pass=document.getElementById('si-pass').value;
+  if(!email||!pass){showErr('Email va parolni kiriting');return}
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){showErr("Login yoki parol noto'g'ri");return}
+  await loadUser(data.user);
+}
+async function signUp(){
+  const name=document.getElementById('su-name').value.trim();
+  const phone=document.getElementById('su-phone').value.trim();
+  const email=document.getElementById('su-email').value.trim();
+  const pass=document.getElementById('su-pass').value;
+  if(!name||!email||!pass){showErr("Barcha maydonlarni to'ldiring");return}
+  if(pass.length<6){showErr("Parol kamida 6 belgi bo'lishi kerak");return}  const{data,error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+  if(error){showErr(error.message);return}
+  if(data.user){await sb.from('profiles').upsert({id:data.user.id,full_name:name,phone:phone,role:'agent'})}
+  showOk("Muvaffaqiyatli ro'yxatdan o'tdingiz! Endi kiring.");
+  setTimeout(()=>switchTab('signin'),2000);
+}
+function showErr(m){const el=document.getElementById('auth-err');el.textContent=m;el.style.display='block';document.getElementById('auth-ok').style.display='none'}
+function showOk(m){const el=document.getElementById('auth-ok');el.textContent=m;el.style.display='block';document.getElementById('auth-err').style.display='none'}
+
+async function loadUser(user){
+  CU=user;
+  const{data:prof}=await sb.from('profiles').select('*').eq('id',user.id).single();
+  if(!prof){const n=user.user_metadata?.full_name||user.email;await sb.from('profiles').insert({id:user.id,full_name:n,role:'agent'});CP={id:user.id,full_name:n,role:'agent'}}
+  else CP=prof;
+  enterApp();
+}
+async function signOut(){await sb.auth.signOut();CU=null;CP=null;document.getElementById('app').classList.remove('active');document.getElementById('login').classList.add('active')}
+
+function enterApp(){
+  document.getElementById('login').classList.remove('active');
+  document.getElementById('app').classList.add('active');
+  updateSidebarAvatar();
+  document.getElementById('ui-name').textContent=CP.full_name;
+  document.getElementById('ui-role').textContent=CP.role==='admin'?'👑 Boshqaruvchi':'Agent';
+  buildNav();navigate('dashboard');startAutoRefresh();
+}
+
+function updateSidebarAvatar(){
+  const av=document.getElementById('ui-av');
+  if(CP.avatar_url){
+    av.innerHTML=`<img src="${CP.avatar_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+    av.className='av';
+  } else {
+    av.className='av '+avc(CP.id);
+    av.textContent=ini(CP.full_name);
+  }
+}
+function buildNav(){
+  const isA=CP.role==='admin';
+  let h=`<div class="nav-section">Asosiy</div>
+    ${ni('dashboard','<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>','🏠 Dashboard')}
+    ${ni('kanban','<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>','Voronka')}
+    ${ni('mylist','<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>','Lidlarim')}
+    ${ni('tasks','<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>','Vazifalar')}
+    ${ni('stats','<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>','Statistika')}`;
+  if(isA)h+=`<div class="nav-section" style="margin-top:6px">Admin</div>
+    ${ni('employees','<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>','Hodimlar')}
+    ${ni('all-leads','<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>','Barcha lidlar')}
+    ${ni('leaderboard','<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>','🏆 Reyting')}`;
+  h+=`<div class="nav-section" style="margin-top:6px">Sozlamalar</div>
+    ${ni('profile','<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>','Mening profilim')}`;
+  document.getElementById('nav-menu').innerHTML=h;
+}
+function ni(p,sp,l){return`<div class="nav-item" id="nav-${p}" onclick="navigate('${p}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${sp}</svg>${l}</div>`}
+
+async function navigate(p){
+  page=p;viewProf=null;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el=document.getElementById('nav-'+p);if(el)el.classList.add('active');
+  const titles={dashboard:'🏠 Dashboard',kanban:'Voronka',mylist:'Lidlarim',tasks:'Vazifalar',stats:'Statistika',employees:'Hodimlar','all-leads':'Barcha lidlar',leaderboard:'🏆 Reyting',profile:'Mening profilim'};
+  document.getElementById('page-title').textContent=titles[p]||p;
+  document.getElementById('main-content').innerHTML='<div class="loading"><div class="spinner"></div> Yuklanmoqda...</div>';
+  document.getElementById('search-input').value='';
+  if(p==='dashboard')await renderDashboard();
+  else if(p==='kanban')await renderKanban();
+  else if(p==='mylist')await renderList(CP.role==='admin'?null:CP.id);
+  else if(p==='tasks')await renderTasks();
+  else if(p==='stats')await renderStats();
+  else if(p==='employees')await renderEmployees();
+  else if(p==='all-leads')await renderList(null);
+  else if(p==='leaderboard')await renderLeaderboard();
+  else if(p==='profile')await renderProfile();
+}
+
+async function getLeads(ownerId=null){
+  let q=sb.from('leads').select('*').order('created_at',{ascending:false});
+  if(ownerId)q=q.eq('owner_id',ownerId);
+  const{data}=await q;return data||[];
+}
+
+function setActions(h){document.getElementById('topbar-actions').innerHTML=h}
+function addLidBtn(){return`<button class="btn green" onclick="openAddLid()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Lid qo'shish</button>`}
+
+async function renderDashboard(){
+  setActions(addLidBtn());
+  const isA=CP.role==='admin';
+  const now=new Date();
+  const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()).toISOString();
+  const weekStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()-now.getDay()).toISOString();
+  const monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+  const monthName=['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'][now.getMonth()];
+
+  const myId=isA?null:CP.id;
+  const allLeads=await getLeads(myId);
+  const todayLeads=allLeads.filter(l=>l.created_at>=todayStart);
+  const weekLeads=allLeads.filter(l=>l.created_at>=weekStart);
+  const monthLeads=allLeads.filter(l=>l.created_at>=monthStart);
+
+  // Tasks
+  let tq=sb.from('tasks').select('*,leads(name)').eq('done',false);
+  if(!isA)tq=tq.eq('owner_id',CP.id);
+  const{data:activeTasks}=await tq.order('created_at');
+  const overdueTasks=(activeTasks||[]).filter(t=>t.due_date&&new Date(t.due_date)<now);
+  const todayTasks=(activeTasks||[]).filter(t=>t.due_date&&new Date(t.due_date)>=now&&new Date(t.due_date)<new Date(todayStart).setHours(23,59,59));
+
+  // Leads without tasks
+  const{data:leadsWithTasks}=await sb.from('tasks').select('lead_id').eq('done',false);
+  const withTaskIds=new Set((leadsWithTasks||[]).map(t=>t.lead_id));
+  const noTaskLeads=allLeads.filter(l=>l.stage!=='deal'&&l.stage!=='lost'&&!withTaskIds.has(l.id));
+
+  // Agent stats for admin
+  let agentStats=[];
+  if(isA){
+    const{data:profs}=await sb.from('profiles').select('*').eq('role','agent');
+    agentStats=(profs||[]).map(p=>{
+      const ml=monthLeads.filter(l=>l.owner_id===p.id);
+      return{...p,monthLeads:ml.length,monthDeals:ml.filter(l=>l.stage==='deal').length,monthRev:ml.filter(l=>l.stage==='deal').reduce((a,l)=>a+(l.budget||0),0)};
+    }).sort((a,b)=>b.monthDeals-a.monthDeals);
+  }
+
+  let h=`
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+    <div>
+      <div style="font-size:18px;font-weight:700">Xayrli kun, ${CP.full_name.split(' ')[0]}! 👋</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:3px">${now.toLocaleDateString('uz-UZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+    </div>
+  </div>
+
+  <!-- Period tabs -->
+  <div style="display:flex;gap:8px;margin-bottom:18px">
+    <div style="padding:6px 14px;border-radius:20px;background:var(--green);color:#fff;font-size:12px;font-weight:600">Bugun</div>
+    <div style="padding:6px 14px;border-radius:20px;background:var(--bg3);color:var(--text2);font-size:12px">${todayLeads.length} ta lid</div>
+    <div style="padding:6px 14px;border-radius:20px;background:var(--bg3);color:var(--text2);font-size:12px">Hafta: ${weekLeads.length}</div>
+    <div style="padding:6px 14px;border-radius:20px;background:var(--bg3);color:var(--text2);font-size:12px">${monthName}: ${monthLeads.length}</div>
+  </div>
+
+  <!-- Main stats -->
+  <div class="stats-row" style="margin-bottom:16px">
+    <div class="stat" style="border-left:3px solid var(--green)">
+      <div class="stat-label">Bugungi lidlar</div>
+      <div class="stat-val">${todayLeads.length}</div>
+      <div class="stat-sub">${monthName}da jami: ${monthLeads.length}</div>
+    </div>
+    <div class="stat" style="border-left:3px solid var(--red)">
+      <div class="stat-label">⚠️ Muddati o'tgan</div>
+      <div class="stat-val" style="color:var(--red)">${overdueTasks.length}</div>
+      <div class="stat-sub" style="color:var(--red)">${overdueTasks.length>0?'Darhol bajaring!':'Hammasi yaxshi ✓'}</div>
+    </div>
+    <div class="stat" style="border-left:3px solid var(--amber)">
+      <div class="stat-label">📋 Vazifalarsiz lidlar</div>
+      <div class="stat-val" style="color:var(--amber)">${noTaskLeads.length}</div>
+      <div class="stat-sub">Vazifa qo'shing</div>
+    </div>
+    <div class="stat" style="border-left:3px solid var(--blue)">
+      <div class="stat-label">💰 ${monthName} bitimlar</div>
+      <div class="stat-val">${monthLeads.filter(l=>l.stage==='deal').length}</div>
+      <div class="stat-sub up">$${(monthLeads.filter(l=>l.stage==='deal').reduce((a,l)=>a+(l.budget||0),0)/1000).toFixed(1)}k</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <!-- Overdue tasks -->
+    <div class="chart-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="chart-title" style="margin:0">⚠️ Muddati o'tgan vazifalar</div>
+        <span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--redBg);color:var(--red);font-weight:600">${overdueTasks.length}</span>
+      </div>
+      ${overdueTasks.length===0?'<div style="font-size:13px;color:var(--text3);text-align:center;padding:16px">✅ Muddati o\'tgan vazifalar yo\'q!</div>':
+      overdueTasks.slice(0,5).map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openLeadDetail(${t.lead_id})">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title}</div>
+          <div style="font-size:11px;color:var(--text3)">${t.leads?.name||''}</div>
+        </div>
+        <div style="font-size:11px;color:var(--red);flex-shrink:0">${new Date(t.due_date).toLocaleDateString('uz-UZ')}</div>
+      </div>`).join('')}
+      ${overdueTasks.length>5?`<div style="font-size:12px;color:var(--text3);text-align:center;margin-top:8px;cursor:pointer" onclick="navigate('tasks')">+${overdueTasks.length-5} ta ko'proq →</div>`:''}
+    </div>
+
+    <!-- No task leads -->
+    <div class="chart-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="chart-title" style="margin:0">📋 Vazifalarsiz lidlar</div>
+        <span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--amberBg);color:var(--amber);font-weight:600">${noTaskLeads.length}</span>
+      </div>
+      ${noTaskLeads.length===0?'<div style="font-size:13px;color:var(--text3);text-align:center;padding:16px">✅ Barcha lidlarda vazifa bor!</div>':
+      noTaskLeads.slice(0,5).map(l=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openLeadDetail(${l.id})">
+        <span class="prio-dot p-${l.priority||'warm'}" style="flex-shrink:0"></span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.name}</div>
+          <div style="font-size:11px;color:var(--text3)">${l.tour||''}</div>
+        </div>
+        <span class="sbadge ${sCls(l.stage)}" style="flex-shrink:0">${sLabel(l.stage)}</span>
+      </div>`).join('')}
+      ${noTaskLeads.length>5?`<div style="font-size:12px;color:var(--text3);text-align:center;margin-top:8px;cursor:pointer" onclick="navigate('mylist')">+${noTaskLeads.length-5} ta ko'proq →</div>`:''}
+    </div>
+  </div>
+
+  <!-- Agent stats (admin only) -->
+  ${isA?`<div class="chart-card">
+    <div class="chart-title">${monthName} — Hodimlar natijasi</div>
+    <div style="overflow-x:auto">
+    <table class="list-table"><thead><tr>
+      <th>#</th><th>Hodim</th><th>Lidlar</th><th>Bitimlar</th><th>Summa</th><th>Konversiya</th>
+    </tr></thead><tbody>
+    ${agentStats.map((a,i)=>`<tr onclick="viewEmployee('${a.id}')" style="cursor:pointer">
+      <td style="font-weight:700">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td>
+      <td><div style="display:flex;align-items:center;gap:7px">
+        <div class="av ${avc(a.id)}" style="background:var(--greenBg);color:var(--green);width:24px;height:24px;font-size:9px">${ini(a.full_name)}</div>
+        ${a.full_name}
+      </div></td>
+      <td>${a.monthLeads}</td>
+      <td style="color:var(--green);font-weight:700">${a.monthDeals}</td>
+      <td style="color:var(--green);font-weight:700">$${a.monthRev.toLocaleString()}</td>
+      <td>${a.monthLeads?Math.round(a.monthDeals/a.monthLeads*100):0}%</td>
+    </tr>`).join('')}
+    </tbody></table></div>
+  </div>`:''}
+
+  <!-- Voronka mini -->
+  <div class="chart-card" style="margin-top:14px">
+    <div class="chart-title">Voronka holati (${monthName})</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    ${STAGES.map(s=>{const n=monthLeads.filter(l=>l.stage===s.id).length;const pct=monthLeads.length?Math.round(n/monthLeads.length*100):0;return`
+      <div style="flex:1;min-width:80px;background:var(--bg3);border-radius:10px;padding:12px;text-align:center;cursor:pointer" onclick="navigate('kanban')">
+        <div style="font-size:20px;font-weight:700;color:${s.color}">${n}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">${s.label}</div>
+        <div style="font-size:10px;color:var(--text3)">${pct}%</div>
+      </div>`}).join('')}
+    </div>
+  </div>`;
+
+  document.getElementById('main-content').innerHTML=h;
+}
+
+async function renderKanban(){
+  const isA=CP.role==='admin';
+  const leads=isA?await getLeads():await getLeads(CP.id);
+  setActions(addLidBtn());
+  const total=leads.length,deals=leads.filter(l=>l.stage==='deal').length;
+  const rev=leads.filter(l=>l.stage==='deal').reduce((a,l)=>a+(l.budget||0),0);
+  let h=`<div class="stats-row">
+    <div class="stat"><div class="stat-label">Jami lidlar</div><div class="stat-val">${total}</div></div>
+    <div class="stat"><div class="stat-label">Yangi</div><div class="stat-val">${leads.filter(l=>l.stage==='new').length}</div></div>
+    <div class="stat"><div class="stat-label">Bitimlar</div><div class="stat-val">${deals}</div><div class="stat-sub up">+${deals} ta</div></div>
+    <div class="stat"><div class="stat-label">Summa</div><div class="stat-val">$${(rev/1000).toFixed(0)}k</div></div>
+  </div><div class="kanban">`;
+  STAGES.forEach(s=>{
+    const items=leads.filter(l=>l.stage===s.id);
+    h+=`<div class="kol" ondrop="dropLid(event,'${s.id}')" ondragover="event.preventDefault()">
+      <div class="kol-head"><div class="kol-title"><div class="kol-dot" style="background:${s.color}"></div>${s.label}</div><div class="kol-count">${items.length}</div></div>`;
+    items.forEach(l=>{h+=`<div class="card" draggable="true" ondragstart="dragId=${l.id}" onclick="openLeadDetail(${l.id})">
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px"><span class="prio-dot p-${l.priority||'warm'}"></span><div class="card-name">${l.name}</div></div>
+      <div class="card-tour">${l.tour||''}</div>
+      <div class="card-foot"><div class="card-price">$${(l.budget||0).toLocaleString()}</div><div class="card-src">${l.source||''}</div></div>
+    </div>`});
+    h+=`</div>`;
+  });
+  h+=`</div>`;
+  document.getElementById('main-content').innerHTML=h;
+}
+
+async function dropLid(e,stage){
+  e.preventDefault();
+  if(!dragId)return;
+  await sb.from('leads').update({stage}).eq('id',dragId);
+  dragId=null;await renderKanban();
+}
+
+async function renderList(ownerId=null){
+  const leads=await getLeads(ownerId);
+  setActions(addLidBtn());
+  if(!leads.length){document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">📋</div>Hozircha lidlar yo\'q</div>';return}
+  const{data:profs}=await sb.from('profiles').select('id,full_name');
+  const pm={};(profs||[]).forEach(p=>pm[p.id]=p.full_name);
+  let h=`<div class="list-wrap"><table class="list-table"><thead><tr><th>Mijoz</th><th>Tur</th><th>Manba</th><th>Holat</th><th>Byudjet</th><th>Hodim</th><th>Sana</th></tr></thead><tbody>`;
+  leads.forEach(l=>{h+=`<tr onclick="openLeadDetail(${l.id})">
+    <td><span class="prio-dot p-${l.priority||'warm'}"></span><strong>${l.name}</strong></td>
+    <td style="color:var(--text2)">${l.tour||'—'}</td>
+    <td style="color:var(--text2)">${l.source||'—'}</td>
+    <td><span class="sbadge ${sCls(l.stage)}">${sLabel(l.stage)}</span></td>
+    <td style="color:var(--green);font-weight:700">$${(l.budget||0).toLocaleString()}</td>
+    <td style="color:var(--text2)">${pm[l.owner_id]||'—'}</td>
+    <td style="color:var(--text3)">${fmtDate(l.created_at)}</td>
+  </tr>`});
+  h+=`</tbody></table></div>`;
+  document.getElementById('main-content').innerHTML=h;
+}
+
+async function openLeadDetail(id){
+  openLead=id;
+  const{data:l}=await sb.from('leads').select('*').eq('id',id).single();
+  if(!l)return;
+  document.getElementById('dp-title').textContent=l.name;
+  document.getElementById('detail-overlay').classList.add('open');
+  document.getElementById('detail-panel').classList.add('open');
+  await renderDetailPanel(l);
+}
+
+async function renderDetailPanel(l){
+  const{data:comments}=await sb.from('comments').select('*,profiles(full_name)').eq('lead_id',l.id).order('created_at');
+  const{data:tasks}=await sb.from('tasks').select('*').eq('lead_id',l.id).order('created_at');
+  const{data:payments}=await sb.from('payments').select('*,profiles(full_name)').eq('lead_id',l.id).order('created_at');
+  const stageOpts=STAGES.map(s=>`<option value="${s.id}"${s.id===l.stage?' selected':''}>${s.label}</option>`).join('');
+  const typeIcon={'comment':'💬','call':'📞','email':'📧'};
+
+  const totalPrice=l.total_price||l.budget||0;
+  const paidAmount=l.paid_amount||0;
+  const remaining=totalPrice-paidAmount;
+  const paidPct=totalPrice?Math.round(paidAmount/totalPrice*100):0;
+
+  let h=`<div class="dp-section">
+    <div class="dp-section-title">Holat</div>
+    <select class="stage-select" onchange="updateStage(${l.id},this.value)">${stageOpts}</select>
+  </div>
+
+  <div class="dp-section">
+    <div class="dp-section-title">💰 To'lov holati</div>
+    <div style="background:var(--bg3);border-radius:var(--radius);padding:12px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:12px;color:var(--text2)">Jami narx</span>
+        <span style="font-weight:700;color:var(--text)">$${totalPrice.toLocaleString()}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:12px;color:var(--text2)">To'langan</span>
+        <span style="font-weight:700;color:var(--green)">$${paidAmount.toLocaleString()}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:12px;color:var(--text2)">Qoldi</span>
+        <span style="font-weight:700;color:${remaining>0?'var(--red)':'var(--green)'}">${remaining>0?'$'+remaining.toLocaleString():'✅ To\'liq'}</span>
+      </div>
+      <div style="height:8px;background:var(--bg4);border-radius:20px;overflow:hidden">
+        <div style="height:100%;width:${paidPct}%;background:var(--green);border-radius:20px;transition:width .5s"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);text-align:right;margin-top:4px">${paidPct}% to'langan</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input class="fi" id="pay-price" type="number" placeholder="Jami narx ($)" value="${totalPrice||''}" style="flex:1">
+      <button class="btn green" onclick="setTotalPrice(${l.id})">Belgilash</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <input class="fi" id="pay-amount" type="number" placeholder="To'lov miqdori ($)" style="flex:1">
+      <input class="fi" id="pay-note" placeholder="Izoh" style="flex:1">
+    </div>
+    <button class="btn green" style="width:100%;justify-content:center;margin-top:8px" onclick="addPayment(${l.id})">+ To'lov qo'shish</button>
+    ${payments&&payments.length?`<div style="margin-top:10px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600">TO'LOV TARIXI</div>
+      ${payments.map(p=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">
+        <div>
+          <div style="font-weight:600;color:var(--green)">+$${(p.amount||0).toLocaleString()}</div>
+          <div style="color:var(--text3)">${p.note||''} · ${fmtDate(p.created_at)}</div>
+        </div>
+        <div style="color:var(--text3)">${p.profiles?.full_name?.split(' ')[0]||''}</div>
+      </div>`).join('')}
+    </div>`:''}
+  </div>
+
+  <div class="dp-section">
+    <div class="dp-section-title">Hujjatlar</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn green" style="flex:1;justify-content:center" onclick="generateContract(${l.id})">📄 Shartnoma</button>
+      <button class="btn" style="flex:1;justify-content:center;border-color:var(--blue);color:var(--blue)" onclick="generateVoucher(${l.id})">🎫 Voucher</button>
+    </div>
+  </div>
+  <div class="dp-section">
+    <div class="dp-section-title">Ma'lumotlar</div>
+    <div class="dp-info-grid">
+      <div class="dp-info-item"><div class="dp-info-label">Telefon</div><div class="dp-info-val">${l.phone||'—'}</div></div>
+      <div class="dp-info-item"><div class="dp-info-label">Byudjet</div><div class="dp-info-val" style="color:var(--green)">$${(l.budget||0).toLocaleString()}</div></div>
+      <div class="dp-info-item"><div class="dp-info-label">Tur</div><div class="dp-info-val">${l.tour||'—'}</div></div>
+      <div class="dp-info-item"><div class="dp-info-label">Manba</div><div class="dp-info-val">${l.source||'—'}</div></div>
+      <div class="dp-info-item"><div class="dp-info-label">Ustuvorlik</div><div class="dp-info-val">${l.priority==='hot'?'🔴 Issiq':l.priority==='warm'?'🟡 Iliq':'🔵 Sovuq'}</div></div>
+      <div class="dp-info-item"><div class="dp-info-label">Sana</div><div class="dp-info-val">${fmtDate(l.created_at)}</div></div>
+    </div>
+    ${l.notes?`<div style="margin-top:8px;padding:10px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2)">${l.notes}</div>`:''}
+  </div>
+
+  <div class="dp-section">
+    <div class="dp-section-title" style="display:flex;justify-content:space-between;align-items:center">
+      Vazifalar <span onclick="toggleAddTask()" style="cursor:pointer;color:var(--green);font-size:18px;line-height:1">+</span>
+    </div>
+    <div class="add-task-form" id="add-task-form">
+      <div class="fg"><input class="fi" id="task-title" placeholder="Vazifa nomi..." style="margin-bottom:8px"></div>
+      <div class="form-row">
+        <input class="fi" id="task-due" type="datetime-local" style="flex:1">
+        <button class="btn green" onclick="addTask(${l.id})">Qo'sh</button>
+      </div>
+    </div>
+    ${tasks&&tasks.length?tasks.map(t=>`
+    <div class="task-item">
+      <div class="task-cb ${t.done?'done':''}" onclick="toggleTask(${t.id},${l.id})">
+        ${t.done?'<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>':''}
+      </div>
+      <div class="task-body">
+        <div class="task-title ${t.done?'done':''}">${t.title}</div>
+        ${t.due_date?`<div class="task-meta">${new Date(t.due_date).toLocaleDateString('uz-UZ')}</div>`:''}
+      </div>
+    </div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">Vazifalar yo\'q</div>'}
+  </div>
+
+  <div class="dp-section">
+    <div class="dp-section-title">Tarix & Izohlar</div>
+    <div class="chat-wrap">
+      <div class="chat-msgs" id="chat-msgs">
+        ${comments&&comments.length?comments.map(c=>{
+          const ic=typeIcon[c.type]||'💬';
+          return`<div class="chat-msg">
+            <div class="chat-av ${avc(c.user_id||'')}" style="background:var(--greenBg);color:var(--green);width:26px;height:26px;font-size:10px">${ini(c.profiles?.full_name||'?')}</div>
+            <div class="chat-bubble ${c.type!=='comment'?c.type:''}">
+              <div class="chat-author">${c.profiles?.full_name||'?'} <span class="chat-type-badge tb-${c.type}">${ic} ${c.type==='call'?'Qo\'ng\'iroq':c.type==='email'?'Email':'Izoh'}</span></div>
+              <div class="chat-text">${c.text}</div>
+              <div class="chat-time">${fmtDate(c.created_at)}</div>
+            </div>
+          </div>`}).join(''):'<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px">Hozircha izohlar yo\'q</div>'}
+      </div>
+      <div class="chat-input-wrap">
+        <select class="chat-type-sel" id="chat-type">
+          <option value="comment">💬 Izoh</option>
+          <option value="call">📞 Qo'ng'iroq</option>
+          <option value="email">📧 Email</option>
+        </select>
+        <textarea class="chat-input" id="chat-input" placeholder="Xabar yozing..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendComment(${l.id})}"></textarea>
+        <button class="chat-send" onclick="sendComment(${l.id})">→</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('dp-body').innerHTML=h;
+  const cm=document.getElementById('chat-msgs');if(cm)cm.scrollTop=cm.scrollHeight;
+}
+
+function toggleAddTask(){const f=document.getElementById('add-task-form');f.classList.toggle('open')}
+
+async function addTask(leadId){
+  const title=document.getElementById('task-title').value.trim();
+  if(!title){notify('Vazifa nomini kiriting','error');return}
+  const due=document.getElementById('task-due').value;
+  await sb.from('tasks').insert({lead_id:leadId,owner_id:CP.id,title,due_date:due||null});
+  document.getElementById('task-title').value='';
+  document.getElementById('task-due').value='';
+  const{data:l}=await sb.from('leads').select('*').eq('id',leadId).single();
+  await renderDetailPanel(l);notify('Vazifa qo\'shildi ✓');
+}
+
+async function toggleTask(taskId,leadId){
+  const{data:t}=await sb.from('tasks').select('done').eq('id',taskId).single();
+  await sb.from('tasks').update({done:!t.done}).eq('id',taskId);
+  const{data:l}=await sb.from('leads').select('*').eq('id',leadId).single();
+  await renderDetailPanel(l);
+}
+
+async function sendComment(leadId){
+  const text=document.getElementById('chat-input').value.trim();
+  if(!text)return;
+  const type=document.getElementById('chat-type').value;
+  await sb.from('comments').insert({lead_id:leadId,user_id:CP.id,text,type});
+  document.getElementById('chat-input').value='';
+  const{data:l}=await sb.from('leads').select('*').eq('id',leadId).single();
+  await renderDetailPanel(l);
+}
+
+async function updateStage(id,stage){
+  await sb.from('leads').update({stage}).eq('id',id);
+  notify('Holat yangilandi ✓');
+  if(page==='kanban')await renderKanban();
+  else if(page==='mylist')await renderList(CP.role==='admin'?null:CP.id);
+  else if(page==='all-leads')await renderList(null);
+}
+
+function closeDetail(){
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('detail-overlay').classList.remove('open');
+  openLead=null;
+}
+
+async function renderTasks(){
+  setActions('');
+  const isA=CP.role==='admin';
+  let q=sb.from('tasks').select('*,leads(name),profiles(full_name)').order('created_at',{ascending:false});
+  if(!isA)q=q.eq('owner_id',CP.id);
+  const{data:tasks}=await q;
+  const all=tasks||[];
+  const active=all.filter(t=>!t.done),done=all.filter(t=>t.done);
+
+  let h=`<div class="tasks-filter">
+    <button class="filter-btn active" onclick="filterTasks('all',this)">Hammasi (${all.length})</button>
+    <button class="filter-btn" onclick="filterTasks('active',this)">Aktiv (${active.length})</button>
+    <button class="filter-btn" onclick="filterTasks('done',this)">Bajarilgan (${done.length})</button>
+  </div><div id="tasks-list">`;
+  if(!all.length){h+='<div class="empty"><div class="empty-icon">✅</div>Vazifalar yo\'q</div>';}
+  else{all.forEach(t=>{const over=t.due_date&&new Date(t.due_date)<new Date()&&!t.done;
+    h+=`<div class="task-item" data-done="${t.done}">
+      <div class="task-cb ${t.done?'done':''}" onclick="toggleTaskPage(${t.id})">
+        ${t.done?'<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>':''}
+      </div>
+      <div class="task-body" style="cursor:pointer" onclick="openLeadDetail(${t.lead_id})">
+        <div class="task-title ${t.done?'done':''}">${t.title}</div>
+        <div class="task-meta">${t.leads?.name||''} ${isA&&t.profiles?'· '+t.profiles.full_name:''}</div>
+      </div>
+      ${t.due_date?`<div class="task-due ${over?'over':''}">${new Date(t.due_date).toLocaleDateString('uz-UZ')}</div>`:''}
+    </div>`});}
+  h+=`</div>`;
+  document.getElementById('main-content').innerHTML=h;
+}
+
+function filterTasks(f,btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.task-item').forEach(el=>{
+    const done=el.dataset.done==='true';
+    el.style.display=(f==='all'||(f==='active'&&!done)||(f==='done'&&done))?'flex':'none';
+  });
+}
+
+async function toggleTaskPage(id){
+  const{data:t}=await sb.from('tasks').select('done').eq('id',id).single();
+  await sb.from('tasks').update({done:!t.done}).eq('id',id);
+  await renderTasks();
+}
+
+async function renderStats(){
+  setActions('');
+  const isA=CP.role==='admin';
+  const leads=isA?await getLeads():await getLeads(CP.id);
+  const total=leads.length||1;
+  const rev=leads.filter(l=>l.stage==='deal').reduce((a,l)=>a+(l.budget||0),0);
+  const bySrc={};leads.forEach(l=>bySrc[l.source||'Boshqa']=(bySrc[l.source||'Boshqa']||0)+1);
+  const maxSrc=Math.max(...Object.values(bySrc),1);
+  const byTour={};leads.forEach(l=>byTour[l.tour||'Boshqa']=(byTour[l.tour||'Boshqa']||0)+1);
+  const maxTour=Math.max(...Object.values(byTour),1);
+
+  let h=`<div class="stats-row">
+    <div class="stat"><div class="stat-label">Jami lidlar</div><div class="stat-val">${leads.length}</div></div>
+    <div class="stat"><div class="stat-label">Konversiya</div><div class="stat-val">${Math.round(leads.filter(l=>l.stage==='deal').length/total*100)}%</div></div>
+    <div class="stat"><div class="stat-label">Bitim summasi</div><div class="stat-val">$${(rev/1000).toFixed(1)}k</div></div>
+    <div class="stat"><div class="stat-label">O'rtacha byudjet</div><div class="stat-val">$${Math.round(leads.reduce((a,l)=>a+(l.budget||0),0)/total)}</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+    <div class="chart-card">
+      <div class="chart-title">Voronka</div>
+      ${STAGES.map(s=>{const n=leads.filter(l=>l.stage===s.id).length;return`<div class="funnel-row"><span style="color:${s.color};font-weight:500">${s.label}</span><span style="font-weight:700">${n}</span><span style="color:var(--text3)">${Math.round(n/total*100)}%</span></div>`}).join('')}
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Manbalar</div>
+      ${Object.entries(bySrc).map(([s,n])=>`<div class="bar-row"><div class="bar-lbl">${s}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxSrc*100)}%;background:var(--green)"></div></div><div class="bar-val">${n}</div></div>`).join('')}
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Turlar</div>
+      ${Object.entries(byTour).map(([s,n])=>`<div class="bar-row"><div class="bar-lbl" style="font-size:11px">${s.replace(' тури','')}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxTour*100)}%;background:var(--blue)"></div></div><div class="bar-val">${n}</div></div>`).join('')}
+    </div>
+  </div>`;
+  document.getElementById('main-content').innerHTML=h;
+}
+
+async function renderEmployees(){
+  setActions(`<button class="btn green" onclick="openAddLid()">${svgPlus()}Lid qo'shish</button>`);
+  const{data:profs}=await sb.from('profiles').select('*').eq('role','agent');
+  allProfs=profs||[];
+  if(!allProfs.length){document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">👥</div>Hozircha hodimlar yo\'q.<br><small>Hodimlar ro\'yxatdan o\'tsa shu yerda ko\'rinadi.</small></div>';return}
+  const allLeads=await getLeads();
+  let h=`<div class="emp-grid">`;
+  allProfs.forEach(p=>{
+    const ml=allLeads.filter(l=>l.owner_id===p.id);
+    const deals=ml.filter(l=>l.stage==='deal').length;
+    const rev=ml.filter(l=>l.stage==='deal').reduce((a,l)=>a+(l.budget||0),0);
+    h+=`<div class="emp-card" onclick="viewEmployee('${p.id}')">
+      <div class="emp-head">
+        <div class="emp-av ${avc(p.id)}" style="background:var(--greenBg);color:var(--green)">${ini(p.full_name)}</div>
+        <div><div class="emp-name">${p.full_name}</div><div class="emp-phone">${p.phone||'—'}</div></div>
+      </div>
+      <div class="emp-stats">
+        <div class="emp-stat"><div class="emp-stat-val">${ml.length}</div><div class="emp-stat-lbl">Lidlar</div></div>
+        <div class="emp-stat"><div class="emp-stat-val">${deals}</div><div class="emp-stat-lbl">Bitim</div></div>
+        <div class="emp-stat"><div class="emp-stat-val">$${(rev/1000).toFixed(0)}k</div><div class="emp-stat-lbl">Summa</div></div>
+      </div>
+    </div>`;
+  });
+  h+=`</div>`;
+  document.getElementById('main-content').innerHTML=h;
+}
+
+async function viewEmployee(id){
+  viewProf=allProfs.find(p=>p.id===id);if(!viewProf)return;
+  page='emp-detail';
+  document.getElementById('page-title').textContent=viewProf.full_name;
+  document.getElementById('main-content').innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  setActions(addLidBtn());
+  const leads=await getLeads(id);
+  const deals=leads.filter(l=>l.stage==='deal').length;
+  const rev=deals?leads.filter(l=>l.stage==='deal').reduce((a,l)=>a+(l.budget||0),0):0;
+  let h=`<div class="back" onclick="navigate('employees')">← Hodimlar</div>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:16px;box-shadow:var(--shadow)">
+    <div class="emp-av" style="width:46px;height:46px;font-size:15px;background:var(--greenBg);color:var(--green)">${ini(viewProf.full_name)}</div>
+    <div><div style="font-size:16px;font-weight:700">${viewProf.full_name}</div><div style="font-size:12px;color:var(--text3)">${viewProf.phone||'Telefon yo\'q'}</div></div>
+  </div>
+  <div class="stats-row" style="margin-bottom:16px">
+    <div class="stat"><div class="stat-label">Jami</div><div class="stat-val">${leads.length}</div></div>
+    <div class="stat"><div class="stat-label">Yangi</div><div class="stat-val">${leads.filter(l=>l.stage==='new').length}</div></div>
+    <div class="stat"><div class="stat-label">Bitim</div><div class="stat-val">${deals}</div></div>
+    <div class="stat"><div class="stat-label">Summa</div><div class="stat-val">$${(rev/1000).toFixed(0)}k</div></div>
+  </div>`;
+  if(!leads.length){h+='<div class="empty"><div class="empty-icon">📋</div>Bu hodimda lidlar yo\'q</div>';}
+  else{h+=`<div class="list-wrap"><table class="list-table"><thead><tr><th>Mijoz</th><th>Tur</th><th>Holat</th><th>Byudjet</th><th>Sana</th></tr></thead><tbody>`;
+  leads.forEach(l=>{h+=`<tr onclick="openLeadDetail(${l.id})"><td><span class="prio-dot p-${l.priority||'warm'}"></span><strong>${l.name}</strong></td><td style="color:var(--text2)">${l.tour||'—'}</td><td><span class="sbadge ${sCls(l.stage)}">${sLabel(l.stage)}</span></td><td style="color:var(--green);font-weight:700">$${(l.budget||0).toLocaleString()}</td><td style="color:var(--text3)">${fmtDate(l.created_at)}</td></tr>`});
+  h+=`</tbody></table></div>`;}
+  document.getElementById('main-content').innerHTML=h;
+}
+
+async function renderLeaderboard(){
+  setActions('');
+  const now=new Date();
+  const monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+  const monthEnd=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString();
+  const monthName=['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'][now.getMonth()];
+
+  const{data:profs}=await sb.from('profiles').select('*').eq('role','agent');
+  const{data:allLeads}=await sb.from('leads').select('*').gte('created_at',monthStart).lte('created_at',monthEnd);
+  const leads=allLeads||[];
+  const agents=(profs||[]).map(p=>{
+    const ml=leads.filter(l=>l.owner_id===p.id);
+    const deals=ml.filter(l=>l.stage==='deal');
+    return{...p,total:ml.length,deals:deals.length,revenue:deals.reduce((a,l)=>a+(l.budget||0),0)};
+  }).sort((a,b)=>b.revenue-a.revenue||b.deals-a.deals);
+
+  const medals=['🥇','🥈','🥉'];
+  const colors=[
+    {bg:'linear-gradient(135deg,#ffd700,#ffb300)',text:'#7a5200',border:'#ffd700'},
+    {bg:'linear-gradient(135deg,#e0e0e0,#bdbdbd)',text:'#424242',border:'#bdbdbd'},
+    {bg:'linear-gradient(135deg,#cd7f32,#a0522d)',text:'#3e1a00',border:'#cd7f32'}
+  ];
+
+  let h=`<div style="text-align:center;margin-bottom:24px">
+    <div style="font-size:28px;margin-bottom:4px">🏆</div>
+    <div style="font-size:18px;font-weight:700">${monthName} ${now.getFullYear()} reytingi</div>
+    <div style="font-size:13px;color:var(--text2);margin-top:4px">Bitimlar soni va summasi bo'yicha</div>
+  </div>`;
+
+  if(!agents.length){h+='<div class="empty"><div class="empty-icon">👥</div>Hozircha hodimlar yo\'q</div>';}
+  else{
+    // Top 3 podium
+    if(agents.length>=1){
+      h+=`<div style="display:flex;justify-content:center;align-items:flex-end;gap:12px;margin-bottom:28px">`;
+      const podiumOrder=agents.length>=3?[1,0,2]:agents.length===2?[1,0]:[0];
+      const heights=['160px','200px','130px'];
+      podiumOrder.forEach((idx)=>{
+        const a=agents[idx];if(!a)return;
+        const c=colors[idx]||{bg:'var(--bg3)',text:'var(--text)',border:'var(--border)'};
+        const h2=idx===0?heights[1]:idx===1?heights[0]:heights[2];
+        h+=`<div style="display:flex;flex-direction:column;align-items:center;width:140px">
+          <div style="font-size:32px;margin-bottom:6px">${medals[idx]||'🎖️'}</div>
+          <div class="av" style="width:44px;height:44px;font-size:14px;background:var(--greenBg);color:var(--green);margin-bottom:6px">${ini(a.full_name)}</div>
+          <div style="font-size:13px;font-weight:700;text-align:center;margin-bottom:8px">${a.full_name.split(' ')[0]}</div>
+          <div style="width:100%;height:${h2};background:${c.bg};border-radius:12px 12px 0 0;border:2px solid ${c.border};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:6px">
+            <div style="font-size:20px;font-weight:800;color:${c.text}">${a.deals}</div>
+            <div style="font-size:11px;color:${c.text};opacity:.8">bitim</div>
+            <div style="font-size:14px;font-weight:700;color:${c.text}">$${(a.revenue/1000).toFixed(1)}k</div>
+          </div>
+        </div>`;
+      });
+      h+=`</div>`;
+    }
+
+    // Full table
+    h+=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden">
+      <table class="list-table"><thead><tr>
+        <th>#</th><th>Hodim</th><th>Lidlar</th><th>Bitimlar</th><th>Summa</th><th>Konversiya</th>
+      </tr></thead><tbody>`;
+    agents.forEach((a,i)=>{
+      const conv=a.total?Math.round(a.deals/a.total*100):0;
+      const medal=medals[i]||'';
+      h+=`<tr onclick="viewEmployee('${a.id}')" style="cursor:pointer">
+        <td style="font-weight:700;font-size:16px">${medal||'#'+(i+1)}</td>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div class="av ${avc(a.id)}" style="background:var(--greenBg);color:var(--green)">${ini(a.full_name)}</div>
+          <div><div style="font-weight:600">${a.full_name}</div><div style="font-size:11px;color:var(--text3)">${a.phone||''}</div></div>
+        </div></td>
+        <td style="font-weight:600">${a.total}</td>
+        <td><span style="font-weight:700;color:var(--green)">${a.deals}</span></td>
+        <td style="font-weight:700;color:var(--green)">$${a.revenue.toLocaleString()}</td>
+        <td><div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;height:8px;background:var(--bg3);border-radius:20px;overflow:hidden;min-width:60px">
+            <div style="height:100%;width:${conv}%;background:var(--green);border-radius:20px"></div>
+          </div>
+          <span style="font-size:12px;color:var(--text2)">${conv}%</span>
+        </div></td>
+      </tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  }
+  document.getElementById('main-content').innerHTML=h;
+}
+
+function svgPlus(){return`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`}
+
+async function openAddLid(){
+  const isA=CP.role==='admin';
+  document.getElementById('admin-assign').style.display=isA?'block':'none';
+  if(isA){
+    const{data:profs}=await sb.from('profiles').select('id,full_name').eq('role','agent');
+    document.getElementById('f-assign').innerHTML=(profs||[]).map(p=>`<option value="${p.id}">${p.full_name}</option>`).join('');
+  }
+  document.getElementById('lid-modal').classList.add('open');
+}
+const TG_TOKEN='8689616238:AAEMErEFtoR4YDOGTBisIFIclumqvK_zeoo';
+const TG_CHAT='6331999423';
+
+async function sendTelegram(msg){
+  try{
+    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:TG_CHAT,text:msg,parse_mode:'HTML'})
+    });
+  }catch(e){console.log('TG error:',e)}
+}
+
+async function addLid(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){notify('Ism kiriting','error');return}
+  const isA=CP.role==='admin';
+  const assignEl=document.getElementById('f-assign');
+  const tour=document.getElementById('f-tour').value;
+  const budget=parseInt(document.getElementById('f-budget').value)||0;
+  const source=document.getElementById('f-source').value;
+  const priority=document.getElementById('f-priority').value;
+  const phone=document.getElementById('f-phone').value||null;
+
+  // Avtomatik taqsimlash
+  let owner_id=CP.id;
+  if(isA){
+    if(assignEl&&assignEl.value){
+      owner_id=assignEl.value;
+    } else {
+      // Yo'nalish bo'yicha avtomatik topish
+      const{data:profs}=await sb.from('profiles').select('id,full_name,specializations').eq('role','agent');
+      const tourLower=tour.toLowerCase();
+      const matched=(profs||[]).find(p=>p.specializations&&p.specializations.some(s=>tourLower.includes(s.toLowerCase().replace(' тури',''))||s.toLowerCase().includes(tourLower.replace(' тури',''))));
+      if(matched){owner_id=matched.id;notify(`Lid ${matched.full_name.split(' ')[0]} ga biriktirildi 🎯`);}
+      else{const all=(profs||[]).find(p=>p.specializations&&p.specializations.some(s=>s.toLowerCase().includes('barcha')));owner_id=all?.id||(profs||[])[0]?.id||CP.id;}
+    }
+  }
+
+  const{error}=await sb.from('leads').insert({name,phone,tour,budget,source,priority,notes:document.getElementById('f-notes').value||null,stage:'new',owner_id});
+  if(error){notify('Xatolik: '+error.message,'error');return}
+
+  // Telegram xabar
+  const prioEmoji=priority==='hot'?'🔴':priority==='warm'?'🟡':'🔵';
+  const{data:ownerProf}=await sb.from('profiles').select('full_name').eq('id',owner_id).single();
+  const ownerName=ownerProf?.full_name||CP.full_name;
+  const msg=`🆕 <b>Yangi lid qo'shildi!</b>\n\n👤 <b>Mijoz:</b> ${name}\n📞 <b>Telefon:</b> ${phone||'—'}\n✈️ <b>Tur:</b> ${tour}\n💰 <b>Byudjet:</b> $${budget.toLocaleString()}\n📢 <b>Manba:</b> ${source}\n${prioEmoji} <b>Ustuvorlik:</b> ${priority==='hot'?'Issiq':priority==='warm'?'Iliq':'Sovuq'}\n👨‍💼 <b>Hodim:</b> ${ownerName}\n\n🔗 TravelCRM`;
+  sendTelegram(msg);
+
+  closeModal('lid-modal');
+  ['f-name','f-phone','f-budget','f-notes'].forEach(id=>document.getElementById(id).value='');
+  notify('Lid qo\'shildi! 📨');
+  if(page==='kanban')await renderKanban();
+  else if(page==='mylist'||page==='all-leads')await renderList(page==='mylist'&&CP.role!=='admin'?CP.id:null);
+  else if(page==='emp-detail'&&viewProf)await viewEmployee(viewProf.id);
+  else if(page==='dashboard')await renderDashboard();
+}
+
+async function generateContract(leadId){
+  const{data:l}=await sb.from('leads').select('*').eq('id',leadId).single();
+  if(!l)return;
+  const{data:agent}=await sb.from('profiles').select('*').eq('id',l.owner_id).single();
+  const today=new Date();
+  const dateStr=today.toLocaleDateString('uz-UZ');
+  const contractNo='CT-'+today.getFullYear()+'-'+String(leadId).padStart(4,'0');
+  const agentName=agent?.full_name||CP.full_name;
+  const agentPhone=agent?.phone||'—';
+
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Shartnoma ${contractNo}</title>
+  <style>
+    body{font-family:'Times New Roman',serif;margin:0;padding:40px;color:#000;font-size:13px;line-height:1.6}
+    .header{text-align:center;margin-bottom:30px}
+    .logo{font-size:20px;font-weight:bold;color:#000}
+    h1{font-size:16px;font-weight:bold;text-align:center;margin:20px 0;text-transform:uppercase}
+    h2{font-size:14px;font-weight:bold;margin:20px 0 10px}
+    table{width:100%;border-collapse:collapse;margin:10px 0}
+    table td{padding:6px 10px;border:1px solid #000;font-size:13px}
+    table td:first-child{font-weight:bold;width:40%;background:#f5f5f5}
+    .sign-row{display:flex;justify-content:space-between;margin-top:40px;gap:40px}
+    .sign-box{flex:1;border-top:1px solid #000;padding-top:8px;font-size:12px}
+    .divider{border:none;border-top:2px solid #000;margin:20px 0}
+    .section{margin-bottom:20px}
+    .num{font-weight:bold}
+    @media print{body{padding:20px}}
+  </style></head><body>
+  <div class="header">
+    <div class="logo">CLUB TRAVEL</div>
+    <div style="font-size:12px;color:#555">Tur agentlik xizmatlari</div>
+  </div>
+  <hr class="divider">
+
+  <h1>TUR XIZMATLARI KO'RSATISH SHARTNOMASI<br>
+  <span style="font-size:13px">ДОГОВОР НА ОКАЗАНИЕ ТУРИСТИЧЕСКИХ УСЛУГ</span></h1>
+
+  <p style="text-align:center">№ <strong>${contractNo}</strong> &nbsp;&nbsp;&nbsp; Sana / Дата: <strong>${dateStr}</strong></p>
+
+  <div class="section">
+    <h2>1. TOMONLAR / СТОРОНЫ</h2>
+    <table>
+      <tr><td>Agentlik / Агентство</td><td><strong>Club Travel</strong></td></tr>
+      <tr><td>Mas'ul agent / Ответственный агент</td><td>${agentName}</td></tr>
+      <tr><td>Agent telefoni / Телефон агента</td><td>${agentPhone}</td></tr>
+      <tr><td>Mijoz / Клиент</td><td><strong>${l.name}</strong></td></tr>
+      <tr><td>Mijoz telefoni / Телефон клиента</td><td>${l.phone||'—'}</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>2. XIZMAT TAFSILOTLARI / ДЕТАЛИ УСЛУГ</h2>
+    <table>
+      <tr><td>Tur yo'nalishi / Направление тура</td><td><strong>${l.tour||'—'}</strong></td></tr>
+      <tr><td>Xizmat narxi / Стоимость услуг</td><td><strong>$${(l.budget||0).toLocaleString()} (USD)</strong></td></tr>
+      <tr><td>To'lov tartibi / Порядок оплаты</td><td>Shartnoma imzolangandan so'ng / После подписания договора</td></tr>
+      <tr><td>Izoh / Примечание</td><td>${l.notes||'—'}</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>3. TOMONLARNING MAJBURIYATLARI / ОБЯЗАТЕЛЬСТВА СТОРОН</h2>
+    <p><span class="num">3.1</span> Agentlik mijozga ko'rsatilgan xizmatlarni o'z vaqtida va sifatli bajarishni o'z zimmasiga oladi.</p>
+    <p><em>Агентство берет на себя обязательство своевременно и качественно оказать указанные услуги клиенту.</em></p>
+    <p><span class="num">3.2</span> Mijoz xizmat narxini belgilangan muddatda to'lashni o'z zimmasiga oladi.</p>
+    <p><em>Клиент обязуется оплатить стоимость услуг в установленные сроки.</em></p>
+    <p><span class="num">3.3</span> Bekor qilish hollari: xizmat ko'rsatilishidan 7 kun oldin bekor qilinsa — to'liq qaytariladi. 7 kundan kam — 50% qaytariladi.</p>
+    <p><em>При отмене за 7 дней — полный возврат. Менее 7 дней — возврат 50%.</em></p>
+  </div>
+
+  <div class="section">
+    <h2>4. BOSHQA SHARTLAR / ПРОЧИЕ УСЛОВИЯ</h2>
+    <p>Ushbu shartnoma ikki nusxada tuzilgan bo'lib, har bir tomon uchun bir nusxadan beriladi.</p>
+    <p><em>Настоящий договор составлен в двух экземплярах, по одному для каждой из сторон.</em></p>
+  </div>
+
+  <div class="sign-row">
+    <div class="sign-box">
+      <strong>Agentlik / Агентство:</strong><br>
+      Club Travel<br><br>
+      Imzo / Подпись: _______________<br>
+      ${agentName}<br>
+      ${agentPhone}
+    </div>
+    <div class="sign-box">
+      <strong>Mijoz / Клиент:</strong><br>
+      ${l.name}<br><br>
+      Imzo / Подпись: _______________<br>
+      ${l.phone||''}
+    </div>
+  </div>
+
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+async function generateVoucher(leadId){
+  const{data:l}=await sb.from('leads').select('*').eq('id',leadId).single();
+  if(!l)return;
+  const{data:agent}=await sb.from('profiles').select('*').eq('id',l.owner_id).single();
+  const today=new Date();
+  const voucherNo='VCH-'+today.getFullYear()+'-'+String(leadId).padStart(4,'0');
+  const agentName=agent?.full_name||CP.full_name;
+  const agentPhone=agent?.phone||'—';
+
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Voucher ${voucherNo}</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:0;padding:30px;color:#000;background:#fff}
+    .voucher{border:3px solid #10b981;border-radius:16px;padding:30px;max-width:600px;margin:0 auto}
+    .v-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px dashed #10b981}
+    .v-logo{font-size:22px;font-weight:bold;color:#10b981}
+    .v-title{font-size:13px;color:#555;text-align:right}
+    .v-no{font-size:16px;font-weight:bold;color:#10b981}
+    .v-body{margin:16px 0}
+    .v-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb}
+    .v-row:last-child{border:none}
+    .v-label{font-size:12px;color:#6b7280;font-weight:600}
+    .v-val{font-size:13px;font-weight:700;color:#111}
+    .v-footer{margin-top:20px;text-align:center;padding:16px;background:#ecfdf5;border-radius:10px}
+    .v-stamp{font-size:11px;color:#059669;margin-top:6px}
+    .big-price{font-size:28px;font-weight:800;color:#10b981;text-align:center;margin:16px 0}
+    @media print{body{padding:10px}}
+  </style></head><body>
+  <div class="voucher">
+    <div class="v-header">
+      <div>
+        <div class="v-logo">🌍 CLUB TRAVEL</div>
+        <div style="font-size:11px;color:#888">Tur agentlik xizmatlari</div>
+      </div>
+      <div class="v-title">
+        <div>YO'LLANMA / VOUCHER</div>
+        <div class="v-no">${voucherNo}</div>
+        <div style="font-size:11px;color:#888">${today.toLocaleDateString('uz-UZ')}</div>
+      </div>
+    </div>
+
+    <div class="v-body">
+      <div class="v-row"><span class="v-label">👤 Mijoz / Клиент</span><span class="v-val">${l.name}</span></div>
+      <div class="v-row"><span class="v-label">📞 Telefon</span><span class="v-val">${l.phone||'—'}</span></div>
+      <div class="v-row"><span class="v-label">✈️ Tur yo'nalishi</span><span class="v-val">${l.tour||'—'}</span></div>
+      <div class="v-row"><span class="v-label">📢 Manba</span><span class="v-val">${l.source||'—'}</span></div>
+      <div class="v-row"><span class="v-label">👨‍💼 Agent</span><span class="v-val">${agentName}</span></div>
+      <div class="v-row"><span class="v-label">📱 Agent telefoni</span><span class="v-val">${agentPhone}</span></div>
+      ${l.notes?`<div class="v-row"><span class="v-label">📝 Izoh</span><span class="v-val">${l.notes}</span></div>`:''}
+    </div>
+
+    <div class="big-price">$${(l.budget||0).toLocaleString()}</div>
+
+    <div class="v-footer">
+      <div style="font-size:14px;font-weight:700;color:#059669">✅ Club Travel tomonidan tasdiqlangan</div>
+      <div style="font-size:14px;font-weight:700;color:#059669">✅ Подтверждено агентством Club Travel</div>
+      <div class="v-stamp">${voucherNo} · ${today.toLocaleDateString('uz-UZ')} · ${agentName}</div>
+    </div>
+  </div>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+async function setTotalPrice(leadId){
+  const price=parseInt(document.getElementById('pay-price').value)||0;
+  await sb.from('leads').update({total_price:price}).eq('id',leadId);
+  const{data:l}=await sb.from('leads').select('*').eq('id',leadId).single();
+  await renderDetailPanel(l);
+  notify('Narx belgilandi ✓');
+}
+
+async function addPayment(leadId){
+  const amount=parseInt(document.getElementById('pay-amount').value)||0;
+  if(!amount){notify('Miqdor kiriting','error');return}
+  const note=document.getElementById('pay-note').value||'';
+  await sb.from('payments').insert({lead_id:leadId,amount,note,created_by:CP.id});
+  // Update paid_amount
+  const{data:pays}=await sb.from('payments').select('amount').eq('lead_id',leadId);
+  const total=(pays||[]).reduce((a,p)=>a+(p.amount||0),0);
+  await sb.from('leads').update({paid_amount:total}).eq('id',leadId);
+  const{data:l}=await sb.from('leads').select('*').eq('id',leadId).single();
+  await renderDetailPanel(l);
+  // Telegram xabar
+  const msg=`💰 <b>To'lov qabul qilindi!</b>\n\n👤 <b>Mijoz:</b> ${l.name}\n💵 <b>To'lov:</b> $${amount.toLocaleString()}\n📝 <b>Izoh:</b> ${note||'—'}\n✅ <b>Jami to'langan:</b> $${total.toLocaleString()}\n👨‍💼 <b>Agent:</b> ${CP.full_name}`;
+  sendTelegram(msg);
+  notify('To\'lov qo\'shildi! ✓');
+}
+
+async function renderProfile(){
+  setActions('');
+  const avatarHtml = CP.avatar_url
+    ? `<img src="${CP.avatar_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
+    : `<span style="font-size:32px;font-weight:700">${ini(CP.full_name)}</span>`;
+
+  let h=`<div style="max-width:500px;margin:0 auto">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:28px;text-align:center;margin-bottom:16px;box-shadow:var(--shadow)">
+      <div style="position:relative;display:inline-block;margin-bottom:16px">
+        <div class="av ${avc(CP.id)}" style="width:90px;height:90px;font-size:32px;margin:0 auto">${avatarHtml}</div>
+        <label for="avatar-input" style="position:absolute;bottom:0;right:0;width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg2)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" width="13" height="13"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </label>
+        <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+      </div>
+      <div style="font-size:18px;font-weight:700">${CP.full_name}</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:4px">${CP.role==='admin'?'👑 Boshqaruvchi':'Agent'}</div>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
+      <div style="font-size:13px;font-weight:600;margin-bottom:14px">Ma'lumotlarni tahrirlash</div>
+      <div class="fg"><label class="fl">To'liq ism</label><input class="fi" id="p-name" value="${CP.full_name||''}"></div>
+      <div class="fg"><label class="fl">Telefon</label><input class="fi" id="p-phone" value="${CP.phone||''}" placeholder="+998 90 000 00 00"></div>
+      <button class="btn green" style="width:100%;justify-content:center" onclick="saveProfile()">Saqlash</button>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:20px;box-shadow:var(--shadow)">
+      <div style="font-size:13px;font-weight:600;margin-bottom:14px">Parolni o'zgartirish</div>
+      <div class="fg"><label class="fl">Yangi parol</label><input class="fi" id="p-pass" type="password" placeholder="Kamida 6 belgi"></div>
+      <div class="fg"><label class="fl">Tasdiqlash</label><input class="fi" id="p-pass2" type="password" placeholder="Yana kiriting"></div>
+      <button class="btn" style="width:100%;justify-content:center" onclick="changePassword()">Parolni o'zgartirish</button>
+    </div>
+  </div>`;
+  document.getElementById('main-content').innerHTML=h;
+}
+
+async function uploadAvatar(input){
+  const file=input.files[0];
+  if(!file)return;
+  if(file.size>2*1024*1024){notify('Rasm 2MB dan kichik bo\'lsin','error');return}
+  notify('Yuklanmoqda...');
+  const ext=file.name.split('.').pop();
+  const path=`${CP.id}/avatar.${ext}`;
+  const{error}=await sb.storage.from('Avatar').upload(path,file,{upsert:true});
+  if(error){notify('Xatolik: '+error.message,'error');return}
+  const{data}=sb.storage.from('Avatar').getPublicUrl(path);
+  await sb.from('profiles').update({avatar_url:data.publicUrl}).eq('id',CP.id);
+  CP.avatar_url=data.publicUrl;
+  updateSidebarAvatar();
+  notify('Rasm yuklandi! ✓');
+  await renderProfile();
+}
+
+async function saveProfile(){
+  const name=document.getElementById('p-name').value.trim();
+  const phone=document.getElementById('p-phone').value.trim();
+  if(!name){notify('Ism kiriting','error');return}
+  const{error}=await sb.from('profiles').update({full_name:name,phone}).eq('id',CP.id);
+  if(error){notify('Xatolik','error');return}
+  CP.full_name=name;CP.phone=phone;
+  document.getElementById('ui-name').textContent=name;
+  notify('Profil saqlandi! ✓');
+}
+
+async function changePassword(){
+  const pass=document.getElementById('p-pass').value;
+  const pass2=document.getElementById('p-pass2').value;
+  if(pass.length<6){notify('Parol kamida 6 belgi','error');return}
+  if(pass!==pass2){notify('Parollar mos emas','error');return}
+  const{error}=await sb.auth.updateUser({password:pass});
+  if(error){notify('Xatolik: '+error.message,'error');return}
+  notify('Parol o\'zgartirildi! ✓');
+  document.getElementById('p-pass').value='';
+  document.getElementById('p-pass2').value='';
+}
+
+async function openEditLid(){
+  if(!openLead)return;
+  const{data:l}=await sb.from('leads').select('*').eq('id',openLead).single();
+  if(!l)return;
+  document.getElementById('ef-name').value=l.name||'';
+  document.getElementById('ef-phone').value=l.phone||'';
+  document.getElementById('ef-budget').value=l.budget||'';
+  document.getElementById('ef-notes').value=l.notes||'';
+  // Set selects
+  ['ef-tour','ef-source','ef-priority'].forEach(id=>{
+    const sel=document.getElementById(id);
+    const val=id==='ef-tour'?l.tour:id==='ef-source'?l.source:l.priority;
+    for(let o of sel.options){if(o.value===val||o.text===val){o.selected=true;break}}
+  });
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+async function saveLidEdit(){
+  if(!openLead)return;
+  const name=document.getElementById('ef-name').value.trim();
+  if(!name){notify('Ism kiriting','error');return}
+  const{error}=await sb.from('leads').update({
+    name,
+    phone:document.getElementById('ef-phone').value||null,
+    tour:document.getElementById('ef-tour').value,
+    budget:parseInt(document.getElementById('ef-budget').value)||0,
+    source:document.getElementById('ef-source').value,
+    priority:document.getElementById('ef-priority').value,
+    notes:document.getElementById('ef-notes').value||null
+  }).eq('id',openLead);
+  if(error){notify('Xatolik','error');return}
+  closeModal('edit-modal');
+  document.getElementById('dp-title').textContent=name;
+  const{data:l}=await sb.from('leads').select('*').eq('id',openLead).single();
+  await renderDetailPanel(l);
+  notify('Lid yangilandi ✓');
+  if(page==='kanban')renderKanban();
+  else if(page==='mylist'||page==='all-leads')renderList(page==='mylist'&&CP.role!=='admin'?CP.id:null);
+  else if(page==='dashboard')renderDashboard();
+}
+
+async function deleteLid(){
+  if(!openLead)return;
+  if(!confirm('Bu lidni o\'chirishni tasdiqlaysizmi?'))return;
+  await sb.from('leads').delete().eq('id',openLead);
+  closeDetail();
+  notify('Lid o\'chirildi');
+  if(page==='kanban')await renderKanban();
+  else if(page==='mylist'||page==='all-leads')await renderList(page==='mylist'&&CP.role!=='admin'?CP.id:null);
+  else if(page==='dashboard')await renderDashboard();
+}
+
+async function onSearch(q){
+  if(!q){
+    if(page==='kanban')await renderKanban();
+    else if(page==='mylist')await renderList(CP.role==='admin'?null:CP.id);
+    else if(page==='all-leads')await renderList(null);
+    return;
+  }
+  // DB search
+  const isA=CP.role==='admin';
+  let query=sb.from('leads').select('*').or(`name.ilike.%${q}%,phone.ilike.%${q}%,tour.ilike.%${q}%`);
+  if(!isA)query=query.eq('owner_id',CP.id);
+  const{data:leads}=await query;
+  if(!leads||!leads.length){
+    document.getElementById('main-content').innerHTML=`<div class="empty"><div class="empty-icon">🔍</div>"${q}" bo'yicha natija topilmadi</div>`;
+    return;
+  }
+  const{data:profs}=await sb.from('profiles').select('id,full_name');
+  const pm={};(profs||[]).forEach(p=>pm[p.id]=p.full_name);
+  let h=`<div style="font-size:13px;color:var(--text2);margin-bottom:12px">"<b>${q}</b>" — ${leads.length} ta natija</div>
+  <div class="list-wrap"><table class="list-table"><thead><tr><th>Mijoz</th><th>Tur</th><th>Holat</th><th>Byudjet</th><th>Hodim</th></tr></thead><tbody>`;
+  leads.forEach(l=>{h+=`<tr onclick="openLeadDetail(${l.id})">
+    <td><span class="prio-dot p-${l.priority||'warm'}"></span><strong>${l.name}</strong><br><small style="color:var(--text3)">${l.phone||''}</small></td>
+    <td style="color:var(--text2)">${l.tour||'—'}</td>
+    <td><span class="sbadge ${sCls(l.stage)}">${sLabel(l.stage)}</span></td>
+    <td style="color:var(--green);font-weight:700">$${(l.budget||0).toLocaleString()}</td>
+    <td style="color:var(--text2)">${pm[l.owner_id]||'—'}</td>
+  </tr>`});
+  h+=`</tbody></table></div>`;
+  document.getElementById('main-content').innerHTML=h;
+}
+
+// Auto-refresh dashboard every 60 seconds
+let refreshTimer=null;
+function startAutoRefresh(){
+  if(refreshTimer)clearInterval(refreshTimer);
+  refreshTimer=setInterval(()=>{
+    if(page==='dashboard')renderDashboard();
+  },60000);
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function closeModalOut(e,id){if(e.target===document.getElementById(id))closeModal(id)}
+
+(async()=>{
+  const{data:{session}}=await sb.auth.getSession();
+  if(session?.user)await loadUser(session.user);
+})();
+</script>
+</body>
+</html>
