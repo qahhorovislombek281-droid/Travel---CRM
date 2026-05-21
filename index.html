@@ -497,15 +497,15 @@ function updateLoginTexts(){
     siForm.querySelector('input[type="password"]')?.setAttribute('placeholder','••••••••');
   }
 }
+const AVC=['av-g','av-b','av-a','av-p','av-r'];
+let CU=null,CP=null,page='kanban',allProfs=[],dragId=null,viewProf=null,openLead=null,isDark=false;
+const STAGES=[{id:'new',label:'Yangi',color:'#10b981'},{id:'contact',label:'Aloqa',color:'#3b82f6'},{id:'offer',label:'Taklif',color:'#f59e0b'},{id:'deal',label:'Bitim',color:'#059669'},{id:'lost',label:"Yo'qotildi",color:'#ef4444'}];
+
 // Init stages with current lang
 function initStages(){
   STAGES[0].label=t('new');STAGES[1].label=t('contact');STAGES[2].label=t('offer');STAGES[3].label=t('deal');STAGES[4].label=t('lost');
 }
 initStages();
-
-const AVC=['av-g','av-b','av-a','av-p','av-r'];
-let CU=null,CP=null,page='kanban',allProfs=[],dragId=null,viewProf=null,openLead=null,isDark=false;
-const STAGES=[{id:'new',label:t('new'),color:'#10b981'},{id:'contact',label:t('contact'),color:'#3b82f6'},{id:'offer',label:t('offer'),color:'#f59e0b'},{id:'deal',label:t('deal'),color:'#059669'},{id:'lost',label:t('lost'),color:'#ef4444'}];
 
 function ini(n){return(n||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2)}
 function avc(id){return AVC[[...(id||'')].reduce((a,c)=>a+c.charCodeAt(0),0)%AVC.length]}
