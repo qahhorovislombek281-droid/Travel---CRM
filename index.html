@@ -260,13 +260,12 @@ textarea.fi{resize:vertical;min-height:70px}
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
         <div onclick="toggleLangLogin()" id="login-lang-btn" style="padding:4px 10px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;color:var(--text2)">🇷🇺 RU</div>
       </div>
-      <div class="tabs">
+      <div class="tabs" id="auth-tabs">
         <div class="tab active" id="tab-signin" onclick="switchTab('signin')">Kirish / Войти</div>
-        <div class="tab" id="tab-signup" onclick="switchTab('signup')">Ro'yxat / Регистрация</div>
       </div>
       <div id="signin-form">
         <div class="fg"><label class="fl">Email</label><input class="fi" id="si-email" type="email" placeholder="email@example.com"></div>
-        <div class="fg"><label class="fl">Parol</label><input class="fi" id="si-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')signIn()"></div>
+        <div class="fg"><label class="fl">Parol</label><div style="position:relative"><input class="fi" id="si-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')signIn()" style="padding-right:40px"><span onclick="togglePass('si-pass',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text3);font-size:13px">👁</span></div></div>
         <button class="btn-primary" onclick="signIn()">Kirish →</button>
       </div>
       <div id="signup-form" style="display:none">
@@ -345,7 +344,16 @@ textarea.fi{resize:vertical;min-height:70px}
     <div class="fg"><label class="fl">Ism Familiya *</label><input class="fi" id="ef-name" placeholder="Jasur Toshmatov"></div>
     <div class="fg"><label class="fl">Telefon</label><input class="fi" id="ef-phone" placeholder="+998 90 000 00 00"></div>
     <div class="fg"><label class="fl">Tur yo'nalishi</label>
-      <select class="fi" id="ef-tour"><option>Dubay тури</option><option>Turkiya тури</option><option>Misr тури</option><option>Maldiv тури</option><option>Tailand тури</option><option>Bali тури</option><option>Yevropa тури</option><option>Boshqa</option></select>
+      <select class="fi" id="ef-tour" onchange="toggleCustomTour('ef-custom-tour',this.value)">
+        <option>Dubay тури</option><option>Turkiya тури</option><option>Misr тури</option>
+        <option>Maldiv тури</option><option>Tailand тури</option><option>Bali тури</option>
+        <option>Yevropa тури</option><option>Gruziya тури</option><option>Xitoy тури</option>
+        <option>Vyetnam тури</option><option>Malayziya тури</option><option>Sharm el Sheikh тури</option>
+        <option>Hainan тури</option><option>Indoneziya тури</option><option>Qatar тури</option>
+        <option>Ozarbayjon тури</option><option>Rossiya тури</option><option>Kruiz</option>
+        <option value="other">✏️ Boshqa (yozish)</option>
+      </select>
+      <input class="fi" id="ef-custom-tour" placeholder="Yo'nalishni yozing..." style="display:none;margin-top:8px">
     </div>
     <div class="fg"><label class="fl">Byudjet ($)</label><input class="fi" id="ef-budget" type="number"></div>
     <div class="fg"><label class="fl">Manba</label>
@@ -369,9 +377,30 @@ textarea.fi{resize:vertical;min-height:70px}
     <div class="fg"><label class="fl">Ism Familiya *</label><input class="fi" id="f-name" placeholder="Jasur Toshmatov"></div>
     <div class="fg"><label class="fl">Telefon</label><input class="fi" id="f-phone" placeholder="+998 90 000 00 00"></div>
     <div class="fg"><label class="fl">Tur yo'nalishi</label>
-      <select class="fi" id="f-tour"><option>Dubay тури</option><option>Turkiya тури</option><option>Misr тури</option><option>Maldiv тури</option><option>Tailand тури</option><option>Bali тури</option><option>Yevropa тури</option><option>Boshqa</option></select>
+      <select class="fi" id="f-tour" onchange="toggleCustomTour('f-custom-tour',this.value)">
+        <option>Dubay тури</option>
+        <option>Turkiya тури</option>
+        <option>Misr тури</option>
+        <option>Maldiv тури</option>
+        <option>Tailand тури</option>
+        <option>Bali тури</option>
+        <option>Yevropa тури</option>
+        <option>Gruziya тури</option>
+        <option>Xitoy тури</option>
+        <option>Vyetnam тури</option>
+        <option>Malayziya тури</option>
+        <option>Sharm el Sheikh тури</option>
+        <option>Hainan тури</option>
+        <option>Indoneziya тури</option>
+        <option>Qatar тури</option>
+        <option>Ozarbayjon тури</option>
+        <option>Rossiya тури</option>
+        <option>Kruiz</option>
+        <option value="other">✏️ Boshqa (yozish)</option>
+      </select>
+      <input class="fi" id="f-custom-tour" placeholder="Yo'nalishni yozing..." style="display:none;margin-top:8px">
     </div>
-    <div class="fg"><label class="fl">Byudjet ($)</label><input class="fi" id="f-budget" type="number" placeholder="2000"></div>
+    <div class="fg"><label class="fl">Byudjet ($)</label><div style="position:relative"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);font-weight:600">$</span><input class="fi" id="f-budget" type="number" placeholder="2000" style="padding-left:24px"></div></div>
     <div class="fg"><label class="fl">Manba</label>
       <select class="fi" id="f-source"><option>Instagram</option><option>Telegram</option><option>Referral</option><option>Website</option><option>Boshqa</option></select>
     </div>
@@ -379,7 +408,7 @@ textarea.fi{resize:vertical;min-height:70px}
       <select class="fi" id="f-priority"><option value="hot">🔴 Issiq</option><option value="warm" selected>🟡 Iliq</option><option value="cold">🔵 Sovuq</option></select>
     </div>
     <div id="admin-assign" style="display:none">
-      <div class="fg"><label class="fl">Hodimga biriktirish</label><select class="fi" id="f-assign"></select></div>
+      <div class="fg"><label class="fl">Tur agentga biriktirish</label><select class="fi" id="f-assign"></select></div>
     </div>
     <div class="fg"><label class="fl">Izoh</label><textarea class="fi" id="f-notes" placeholder="Qo'shimcha ma'lumot..."></textarea></div>
     <div style="display:flex;gap:8px;margin-top:4px">
@@ -409,6 +438,18 @@ const SUPA_URL = 'https://wyoidilxdbtirzgaxipo.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5b2lkaWx4ZGJ0aXJ6Z2F4aXBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNTU5ODEsImV4cCI6MjA5NDgzMTk4MX0.TXioAlvrjIGjwQIYeqZIlOkIxdg_Q4hSq6mnAzU0xyc';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
+
+// XSS himoya
+function esc(str){
+  if(!str)return'';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Page size for pagination
+const PAGE_SIZE = 50;
+let currentPage_leads = 0;
+let totalLeads = 0;
+
 // ---- TIL TIZIMI ----
 let lang = localStorage.getItem('lang')||'uz';
 const LANGS = {
@@ -425,7 +466,7 @@ const LANGS = {
     source:'Manba', priority:'Ustuvorlik', budget:'Byudjet ($)',
     hot:'🔴 Issiq', warm:'🟡 Iliq', cold:'🔵 Sovuq',
     notes:"Izoh", save:'Saqlash', cancel:'Bekor', add:"Qo'shish",
-    edit:'Tahrirlash', delete:"O'chirish", assign:"Hodimga biriktirish",
+    edit:'Tahrirlash', delete:"O'chirish", assign:"Tur agentga biriktirish",
     tour:"Tur yo'nalishi", status:'Holat', docs:'Hujjatlar',
     contract:'📄 Shartnoma', voucher:'🎫 Voucher',
     payment:'💰 To\'lov holati', totalprice:'Jami narx',
@@ -437,7 +478,7 @@ const LANGS = {
     conversion:'Konversiya', avgbudget:"O'rtacha byudjet",
     dealsum:'Bitim summasi', sources:'Manbalar', tours:'Turlar',
     funnel:'Voronka holati', monthrating:'oylik natijalari',
-    rank:'#', agentcol:'Hodim', leadscol:'Lidlar', dealscol:'Bitimlar',
+    rank:'#', agentcol:'Tur agent', leadscol:'Lidlar', dealscol:'Bitimlar',
     sumcol:'Summa', convcol:'Konversiya',
     myprofile:'Profil ma\'lumotlari', changepass:'Parolni o\'zgartirish',
     newpass:'Yangi parol', confirmpass:'Tasdiqlash',
@@ -551,9 +592,14 @@ async function signIn(){
   const email=document.getElementById('si-email').value.trim();
   const pass=document.getElementById('si-pass').value;
   if(!email||!pass){showErr('Email va parolni kiriting');return}
-  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
-  if(error){showErr("Login yoki parol noto'g'ri");return}
-  await loadUser(data.user);
+  const btn=document.querySelector('#signin-form .btn-primary');
+  setBtnLoading(btn,true);
+  try{
+    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error){showErr(lang==='uz'?"Login yoki parol noto'g'ri":"Неверный логин или пароль");return}
+    await loadUser(data.user);
+  }catch(e){showErr('Internet bilan muammo. Qayta urinib ko\'ring.');}
+  finally{setBtnLoading(btn,false);}
 }
 async function signUp(){
   const name=document.getElementById('su-name').value.trim();
@@ -572,8 +618,7 @@ function showOk(m){const el=document.getElementById('auth-ok');el.textContent=m;
 
 async function loadUser(user){
   CU=user;
-  const{data:prof}=await sb.from('profiles').select('*').eq('id',user.id).single();
-  if(!prof){const n=user.user_metadata?.full_name||user.email;await sb.from('profiles').insert({id:user.id,full_name:n,role:'agent'});CP={id:user.id,full_name:n,role:'agent'}}
+  const{data:prof}=await sb.from('profiles').select('*').eq('id',user.id).single();  if(!prof){const n=user.user_metadata?.full_name||user.email;await sb.from('profiles').insert({id:user.id,full_name:n,role:'agent'});CP={id:user.id,full_name:n,role:'agent'}}
   else CP=prof;
   enterApp();
 }
@@ -587,7 +632,9 @@ function enterApp(){
   document.getElementById('ui-role').textContent=CP.role==='admin'?t('admin'):t('agent');
   const lb=document.getElementById('lang-btn');if(lb)lb.textContent=lang==='uz'?'🇷🇺 RU':'🇺🇿 UZ';
   const si=document.getElementById('search-input');if(si)si.placeholder=t('searchph');
-  buildNav();navigate('dashboard');startAutoRefresh();
+  buildNav();navigate('dashboard');startAutoRefresh();startRealtime();
+  // Update last login
+  sb.from('profiles').update({last_login:new Date().toISOString()}).eq('id',CP.id).then(()=>{});
 }
 
 function updateSidebarAvatar(){
@@ -637,11 +684,44 @@ async function navigate(p){
   else if(p==='profile')await renderProfile();
 }
 
-async function getLeads(ownerId=null){
-  let q=sb.from('leads').select('*').order('created_at',{ascending:false});
+async function getLeads(ownerId=null, opts={}){
+  const{limit=200, stage=null, sortBy='created_at', sortAsc=false}=opts;
+  let q=sb.from('leads').select('*').order(sortBy,{ascending:sortAsc}).limit(limit);
   if(ownerId)q=q.eq('owner_id',ownerId);
-  const{data}=await q;return data||[];
+  if(stage)q=q.eq('stage',stage);
+  const{data,error}=await q;
+  if(error){notify('Ma\'lumot yuklashda xato: '+error.message,'error');return[];}
+  return data||[];
 }
+
+// Button loading state
+function setBtnLoading(btnEl, loading, text=''){
+  if(!btnEl)return;
+  if(loading){btnEl.disabled=true;btnEl._orig=btnEl.innerHTML;btnEl.innerHTML='<div class="spinner" style="width:14px;height:14px;margin:0 auto"></div>';}
+  else{btnEl.disabled=false;btnEl.innerHTML=btnEl._orig||text;}
+}
+
+// CSV Export
+function exportCSV(leads, filename='leads.csv'){
+  const headers=['Ism','Telefon','Tur','Manba','Holat','Byudjet','Sana'];
+  const rows=leads.map(l=>[l.name,l.phone||'',l.tour||'',l.source||'',sLabel(l.stage),l.budget||0,new Date(l.created_at).toLocaleDateString('uz-UZ')]);
+  const csv=[headers,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
+}
+
+// Sort state
+let sortState={col:'created_at',asc:false};
+
+function sortBy(col){
+  if(sortState.col===col)sortState.asc=!sortState.asc;
+  else{sortState.col=col;sortState.asc=false;}
+  if(page==='mylist')renderList(CP.role==='admin'?null:CP.id);
+  else if(page==='all-leads')renderList(null);
+}
+
+// Filter state
+let filterState={stage:'',source:''};
 
 function setActions(h){document.getElementById('topbar-actions').innerHTML=h}
 function addLidBtn(){return`<button class="btn green" onclick="openAddLid()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${t('addlid')}</button>`}
@@ -766,7 +846,7 @@ async function renderDashboard(){
     <div class="chart-title">${monthName} — Tur agentlar natijasi</div>
     <div style="overflow-x:auto">
     <table class="list-table"><thead><tr>
-      <th>#</th><th>Hodim</th><th>Lidlar</th><th>Bitimlar</th><th>Summa</th><th>Konversiya</th>
+      <th>#</th><th>Tur agent</th><th>Lidlar</th><th>Bitimlar</th><th>Summa</th><th>Konversiya</th>
     </tr></thead><tbody>
     ${agentStats.map((a,i)=>`<tr onclick="viewEmployee('${a.id}')" style="cursor:pointer">
       <td style="font-weight:700">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td>
@@ -814,10 +894,12 @@ async function renderKanban(){
     const items=leads.filter(l=>l.stage===s.id);
     h+=`<div class="kol" ondrop="dropLid(event,'${s.id}')" ondragover="event.preventDefault()">
       <div class="kol-head"><div class="kol-title"><div class="kol-dot" style="background:${s.color}"></div>${s.label}</div><div class="kol-count">${items.length}</div></div>`;
+    if(!items.length){h+=`<div style="text-align:center;padding:20px 10px;color:var(--text3);font-size:12px">Lidlar yo'q</div>`;}
     items.forEach(l=>{h+=`<div class="card" draggable="true" ondragstart="dragId=${l.id}" onclick="openLeadDetail(${l.id})">
-      <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px"><span class="prio-dot p-${l.priority||'warm'}"></span><div class="card-name">${l.name}</div></div>
-      <div class="card-tour">${l.tour||''}</div>
-      <div class="card-foot"><div class="card-price">$${(l.budget||0).toLocaleString()}</div><div class="card-src">${l.source||''}</div></div>
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px"><span class="prio-dot p-${l.priority||'warm'}"></span><div class="card-name">${esc(l.name)}</div></div>
+      <div class="card-tour">${esc(l.tour)||''}</div>
+      <div style="font-size:11px;color:var(--text3)">${l.phone||''}</div>
+      <div class="card-foot"><div class="card-price">$${(l.budget||0).toLocaleString()}</div><div style="display:flex;align-items:center;gap:4px">${(()=>{const d=Math.floor((new Date()-new Date(l.created_at))/86400000);return d>7?`<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:var(--redBg);color:var(--red)">${d}k</span>`:''})()} <div class="card-src">${esc(l.source)||''}</div></div></div>
     </div>`});
     h+=`</div>`;
   });
@@ -833,13 +915,35 @@ async function dropLid(e,stage){
 }
 
 async function renderList(ownerId=null){
-  const leads=await getLeads(ownerId);
-  setActions(addLidBtn());
-  if(!leads.length){document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">📋</div>Hozircha lidlar yo\'q</div>';return}
+  const leads=await getLeads(ownerId,{sortBy:sortState.col,sortAsc:sortState.asc});
+  setActions(`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <select class="fi" style="padding:7px 10px;width:auto" onchange="filterState.stage=this.value;renderList(${ownerId?`'${ownerId}'`:'null'})">
+      <option value="">Barcha holat</option>
+      ${STAGES.map(s=>`<option value="${s.id}"${filterState.stage===s.id?' selected':''}>${s.label}</option>`).join('')}
+    </select>
+    <button class="btn" onclick="exportLeadsCSV(${ownerId?`'${ownerId}'`:'null'})">📥 CSV</button>
+    ${addLidBtn()}
+  </div>`);
+
+  // Apply filter
+  const filtered=filterState.stage?leads.filter(l=>l.stage===filterState.stage):leads;
+
+  if(!filtered.length){document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">📋</div>Hozircha lidlar yo\'q</div>';return}
   const{data:profs}=await sb.from('profiles').select('id,full_name');
   const pm={};(profs||[]).forEach(p=>pm[p.id]=p.full_name);
-  let h=`<div class="list-wrap"><table class="list-table"><thead><tr><th>Mijoz</th><th>Tur</th><th>Manba</th><th>Holat</th><th>Byudjet</th><th>Hodim</th><th>Sana</th></tr></thead><tbody>`;
-  leads.forEach(l=>{h+=`<tr onclick="openLeadDetail(${l.id})">
+
+  function sortIcon(col){return sortState.col===col?(sortState.asc?'↑':'↓'):''}
+
+  let h=`<div style="font-size:13px;color:var(--text2);margin-bottom:10px">${filtered.length} ta lid</div>
+  <div class="list-wrap"><table class="list-table"><thead><tr>
+    <th style="cursor:pointer" onclick="sortBy('name')">Mijoz ${sortIcon('name')}</th>
+    <th>Tur</th><th>Manba</th>
+    <th style="cursor:pointer" onclick="sortBy('stage')">Holat ${sortIcon('stage')}</th>
+    <th style="cursor:pointer" onclick="sortBy('budget')">Byudjet ${sortIcon('budget')}</th>
+    <th>Tur agent</th>
+    <th style="cursor:pointer" onclick="sortBy('created_at')">Sana ${sortIcon('created_at')}</th>
+  </tr></thead><tbody>`;
+  filtered.forEach(l=>{h+=`<tr onclick="openLeadDetail(${l.id})">
     <td><span class="prio-dot p-${l.priority||'warm'}"></span><strong>${l.name}</strong></td>
     <td style="color:var(--text2)">${l.tour||'—'}</td>
     <td style="color:var(--text2)">${l.source||'—'}</td>
@@ -850,6 +954,12 @@ async function renderList(ownerId=null){
   </tr>`});
   h+=`</tbody></table></div>`;
   document.getElementById('main-content').innerHTML=h;
+}
+
+async function exportLeadsCSV(ownerId){
+  const leads=await getLeads(ownerId||null);
+  exportCSV(leads, `clubtravel_lidlar_${new Date().toLocaleDateString('uz-UZ')}.csv`);
+  notify('CSV yuklab olindi! ✓');
 }
 
 async function openLeadDetail(id){
@@ -937,11 +1047,18 @@ async function renderDetailPanel(l){
       <div class="dp-info-item"><div class="dp-info-label">Manba</div><div class="dp-info-val">${l.source||'—'}</div></div>
       <div class="dp-info-item"><div class="dp-info-label">Ustuvorlik</div><div class="dp-info-val">${l.priority==='hot'?'🔴 Issiq':l.priority==='warm'?'🟡 Iliq':'🔵 Sovuq'}</div></div>
       <div class="dp-info-item"><div class="dp-info-label">Sana</div><div class="dp-info-val">${fmtDate(l.created_at)}</div></div>
+      <div class="dp-info-item"><div class="dp-info-label">Yoshi</div><div class="dp-info-val">${Math.floor((new Date()-new Date(l.created_at))/86400000)} kun</div></div>
     </div>
     ${l.notes?`<div style="margin-top:8px;padding:10px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2)">${l.notes}</div>`:''}
   </div>
 
-  <div class="dp-section">
+  ${CP.role==='admin'?`<div class="dp-section">
+    <div class="dp-section-title">👤 Tur agentni o'zgartirish</div>
+    <select class="stage-select" id="reassign-select" onchange="reassignLead(${l.id},this.value)">
+      ${(await sb.from('profiles').select('id,full_name').eq('role','agent')).data?.map(p=>`<option value="${p.id}"${p.id===l.owner_id?' selected':''}>${p.full_name}</option>`).join('')||''}
+    </select>
+  </div>`:''}
+
     <div class="dp-section-title" style="display:flex;justify-content:space-between;align-items:center">
       Vazifalar <span onclick="toggleAddTask()" style="cursor:pointer;color:var(--green);font-size:18px;line-height:1">+</span>
     </div>
@@ -1084,7 +1201,7 @@ async function toggleTaskPage(id){
 }
 
 async function renderStats(){
-  setActions('');
+  setActions(`<button class="btn" onclick="exportStatsPDF()">📊 PDF hisobot</button>`);
   const isA=CP.role==='admin';
   const leads=isA?await getLeads():await getLeads(CP.id);
   const total=leads.length||1;
@@ -1130,8 +1247,16 @@ async function renderEmployees(){
     const rev=ml.filter(l=>l.stage==='deal').reduce((a,l)=>a+(l.budget||0),0);
     h+=`<div class="emp-card" onclick="viewEmployee('${p.id}')">
       <div class="emp-head">
-        <div class="emp-av ${avc(p.id)}" style="background:var(--greenBg);color:var(--green)">${ini(p.full_name)}</div>
+        <div class="emp-av ${avc(p.id)}" style="background:var(--greenBg);color:var(--green);position:relative;overflow:hidden">
+          ${p.avatar_url?`<img src="${p.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:`${ini(p.full_name)}`}
+        </div>
         <div><div class="emp-name">${p.full_name}</div><div class="emp-phone">${p.phone||'—'}</div></div>
+        <div style="margin-left:auto">
+          <label onclick="event.stopPropagation()" style="cursor:pointer;padding:4px 8px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);font-size:11px;color:var(--text2)">
+            📷
+            <input type="file" accept="image/*" style="display:none" onchange="uploadAgentAvatar(this,'${p.id}')">
+          </label>
+        </div>
       </div>
       <div class="emp-stats">
         <div class="emp-stat"><div class="emp-stat-val">${ml.length}</div><div class="emp-stat-lbl">${t('leadscol')}</div></div>
@@ -1155,8 +1280,21 @@ async function viewEmployee(id){
   const rev=deals?leads.filter(l=>l.stage==='deal').reduce((a,l)=>a+(l.budget||0),0):0;
   let h=`<div class="back" onclick="navigate('employees')">← Tur agentlar</div>
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:16px;box-shadow:var(--shadow)">
-    <div class="emp-av" style="width:46px;height:46px;font-size:15px;background:var(--greenBg);color:var(--green)">${ini(viewProf.full_name)}</div>
-    <div><div style="font-size:16px;font-weight:700">${viewProf.full_name}</div><div style="font-size:12px;color:var(--text3)">${viewProf.phone||'Telefon yo\'q'}</div></div>
+    <div style="position:relative">
+      <div class="emp-av" style="width:56px;height:56px;font-size:18px;background:var(--greenBg);color:var(--green);overflow:hidden">
+        ${viewProf.avatar_url?`<img src="${viewProf.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:`${ini(viewProf.full_name)}`}
+      </div>
+      <label style="position:absolute;bottom:0;right:0;width:20px;height:20px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg2)">
+        <span style="font-size:10px">📷</span>
+        <input type="file" accept="image/*" style="display:none" onchange="uploadAgentAvatar(this,'${viewProf.id}')">
+      </label>
+    </div>
+    <div>
+      <div style="font-size:16px;font-weight:700">${viewProf.full_name}</div>
+      <div style="font-size:12px;color:var(--text3)">${viewProf.phone||"Telefon yo'q"}</div>
+      ${viewProf.specializations?.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${viewProf.specializations.slice(0,3).map(s=>`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--greenBg);color:var(--green)">${s.replace(' тури','')}</span>`).join('')}${viewProf.specializations.length>3?`<span style="font-size:10px;color:var(--text3)">+${viewProf.specializations.length-3}</span>`:''}</div>`:''}
+    </div>
+    ${viewProf.last_login?`<div style="margin-left:auto;text-align:right"><div style="font-size:10px;color:var(--text3)">Oxirgi kirish</div><div style="font-size:11px;color:var(--text2)">${fmtDate(viewProf.last_login)}</div></div>`:''}
   </div>
   <div class="stats-row" style="margin-bottom:16px">
     <div class="stat"><div class="stat-label">Jami</div><div class="stat-val">${leads.length}</div></div>
@@ -1164,7 +1302,7 @@ async function viewEmployee(id){
     <div class="stat"><div class="stat-label">Bitim</div><div class="stat-val">${deals}</div></div>
     <div class="stat"><div class="stat-label">Summa</div><div class="stat-val">$${(rev/1000).toFixed(0)}k</div></div>
   </div>`;
-  if(!leads.length){h+='<div class="empty"><div class="empty-icon">📋</div>Bu tur agentda lidlar yo'q</div>';}
+  if(!leads.length){h+='<div class="empty"><div class="empty-icon">📋</div>Bu tur agentda lidlar yoq</div>';}
   else{h+=`<div class="list-wrap"><table class="list-table"><thead><tr><th>Mijoz</th><th>Tur</th><th>Holat</th><th>Byudjet</th><th>Sana</th></tr></thead><tbody>`;
   leads.forEach(l=>{h+=`<tr onclick="openLeadDetail(${l.id})"><td><span class="prio-dot p-${l.priority||'warm'}"></span><strong>${l.name}</strong></td><td style="color:var(--text2)">${l.tour||'—'}</td><td><span class="sbadge ${sCls(l.stage)}">${sLabel(l.stage)}</span></td><td style="color:var(--green);font-weight:700">$${(l.budget||0).toLocaleString()}</td><td style="color:var(--text3)">${fmtDate(l.created_at)}</td></tr>`});
   h+=`</tbody></table></div>`;}
@@ -1200,7 +1338,7 @@ async function renderLeaderboard(){
     <div style="font-size:13px;color:var(--text2);margin-top:4px">Bitimlar soni va summasi bo'yicha</div>
   </div>`;
 
-  if(!agents.length){h+='<div class="empty"><div class="empty-icon">👥</div>Hozircha hodimlar yo\'q</div>';}
+  if(!agents.length){h+='<div class="empty"><div class="empty-icon">👥</div>Hozircha tur agentlar yo\'q</div>';}
   else{
     // Top 3 podium
     if(agents.length>=1){
@@ -1296,16 +1434,60 @@ async function sendTelegram(msg){
   }catch(e){console.log('TG error:',e)}
 }
 
+async function uploadAgentAvatar(input, agentId){
+  const file=input.files[0];
+  if(!file)return;
+  if(file.size>2*1024*1024){notify('Rasm 2MB dan kichik bo\'lsin','error');return}
+  notify('Yuklanmoqda...');
+  const ext=file.name.split('.').pop();
+  const path=`${agentId}/avatar.${ext}`;
+  const{error}=await sb.storage.from('Avatar').upload(path,file,{upsert:true});
+  if(error){notify('Xatolik: '+error.message,'error');return}
+  const{data}=sb.storage.from('Avatar').getPublicUrl(path);
+  await sb.from('profiles').update({avatar_url:data.publicUrl}).eq('id',agentId);
+  notify('Rasm yuklandi! ✓');
+  // Refresh current view
+  if(page==='employees')await renderEmployees();
+  else if(page==='emp-detail'&&viewProf?.id===agentId)await viewEmployee(agentId);
+}
+
+function togglePass(id, btn){
+  const el=document.getElementById(id);
+  if(el.type==='password'){el.type='text';btn.textContent='🙈';}
+  else{el.type='password';btn.textContent='👁';}
+}
+
+function toggleCustomTour(inputId, val){
+  const el=document.getElementById(inputId);
+  if(el){el.style.display=val==='other'?'block':'none';if(val!=='other')el.value='';}
+}
+
 async function addLid(){
+  const btn=document.querySelector('#lid-modal .btn.green');
+  setBtnLoading(btn,true);
+  try{
   const name=document.getElementById('f-name').value.trim();
-  if(!name){notify('Ism kiriting','error');return}
+  if(!name){notify('Ism kiriting','error');setBtnLoading(btn,false);return}
+  const phone=document.getElementById('f-phone').value.trim()||null;
+
+  // Telefon formati tekshirish
+  if(phone&&!validatePhone(phone)){notify('Telefon raqam noto\'g\'ri format! (+998901234567)','error');return}
+
+  // Dublikat tekshirish
+  if(phone){
+    const dup=await checkDuplicate(phone,name);
+    if(dup){
+      if(!confirm(`⚠️ Bu telefon raqam allaqachon bazada bor!\n\nMijoz: ${dup.name}\nHolat: ${sLabel(dup.stage)}\n\nBaribir qo'shamizmi?`))return;
+    }
+  }
+
   const isA=CP.role==='admin';
   const assignEl=document.getElementById('f-assign');
-  const tour=document.getElementById('f-tour').value;
+  const tourSel=document.getElementById('f-tour').value;
+  const tour=tourSel==='other'?(document.getElementById('f-custom-tour').value.trim()||'Boshqa'):tourSel;
   const budget=parseInt(document.getElementById('f-budget').value)||0;
   const source=document.getElementById('f-source').value;
   const priority=document.getElementById('f-priority').value;
-  const phone=document.getElementById('f-phone').value||null;
 
   // Avtomatik taqsimlash
   let owner_id=CP.id;
@@ -1329,7 +1511,7 @@ async function addLid(){
   const prioEmoji=priority==='hot'?'🔴':priority==='warm'?'🟡':'🔵';
   const{data:ownerProf}=await sb.from('profiles').select('full_name').eq('id',owner_id).single();
   const ownerName=ownerProf?.full_name||CP.full_name;
-  const msg=`🆕 <b>Yangi lid qo'shildi!</b>\n\n👤 <b>Mijoz:</b> ${name}\n📞 <b>Telefon:</b> ${phone||'—'}\n✈️ <b>Tur:</b> ${tour}\n💰 <b>Byudjet:</b> $${budget.toLocaleString()}\n📢 <b>Manba:</b> ${source}\n${prioEmoji} <b>Ustuvorlik:</b> ${priority==='hot'?'Issiq':priority==='warm'?'Iliq':'Sovuq'}\n👨‍💼 <b>Hodim:</b> ${ownerName}\n\n🔗 TravelCRM`;
+  const msg=`🆕 <b>Yangi lid qo'shildi!</b>\n\n👤 <b>Mijoz:</b> ${name}\n📞 <b>Telefon:</b> ${phone||'—'}\n✈️ <b>Tur:</b> ${tour}\n💰 <b>Byudjet:</b> $${budget.toLocaleString()}\n📢 <b>Manba:</b> ${source}\n${prioEmoji} <b>Ustuvorlik:</b> ${priority==='hot'?'Issiq':priority==='warm'?'Iliq':'Sovuq'}\n👨‍💼 <b>Tur agent:</b> ${ownerName}\n\n🔗 TravelCRM`;
   sendTelegram(msg);
 
   closeModal('lid-modal');
@@ -1339,6 +1521,8 @@ async function addLid(){
   else if(page==='mylist'||page==='all-leads')await renderList(page==='mylist'&&CP.role!=='admin'?CP.id:null);
   else if(page==='emp-detail'&&viewProf)await viewEmployee(viewProf.id);
   else if(page==='dashboard')await renderDashboard();
+  }catch(e){notify('Xatolik: '+e.message,'error');}
+  finally{setBtnLoading(btn,false);}
 }
 
 async function generateContract(leadId){
@@ -1529,6 +1713,11 @@ async function addPayment(leadId){
   // Telegram xabar
   const msg=`💰 <b>To'lov qabul qilindi!</b>\n\n👤 <b>Mijoz:</b> ${l.name}\n💵 <b>To'lov:</b> $${amount.toLocaleString()}\n📝 <b>Izoh:</b> ${note||'—'}\n✅ <b>Jami to'langan:</b> $${total.toLocaleString()}\n👨‍💼 <b>Agent:</b> ${CP.full_name}`;
   sendTelegram(msg);
+  // Qolgan summa eslatmasi
+  if(l.total_price&&total<l.total_price){
+    const rem=l.total_price-total;
+    sendTelegram(`⏰ <b>To'lov eslatmasi!</b>\n\n👤 <b>Mijoz:</b> ${l.name}\n💳 <b>Qolgan summa:</b> $${rem.toLocaleString()}\n👨‍💼 <b>Agent:</b> ${CP.full_name}`);
+  }
   notify('To\'lov qo\'shildi! ✓');
 }
 
@@ -1564,6 +1753,13 @@ async function renderProfile(){
       <div class="fg"><label class="fl">${t('confirmpass')}</label><input class="fi" id="p-pass2" type="password" placeholder="${lang==='uz'?'Yana kiriting':'Повторите пароль'}"></div>
       <button class="btn" style="width:100%;justify-content:center" onclick="changePassword()">${t('changepass')}</button>
     </div>
+
+    ${CP.role==='agent'&&CP.specializations?.length?`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:20px;margin-top:16px;box-shadow:var(--shadow)">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">✈️ Mening yo'nalishlarim</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${CP.specializations.map(s=>`<span style="padding:5px 12px;border-radius:20px;background:var(--greenBg);color:var(--green);font-size:12px;font-weight:500">${s}</span>`).join('')}
+      </div>
+    </div>`:''}
   </div>`;
   document.getElementById('main-content').innerHTML=h;
 }
@@ -1668,6 +1864,62 @@ async function confirmDelete(){
   else if(page==='dashboard')await renderDashboard();
 }
 
+async function exportStatsPDF(){
+  const isA=CP.role==='admin';
+  const leads=isA?await getLeads():await getLeads(CP.id);
+  const now=new Date();
+  const monthName=['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'][now.getMonth()];
+  const total=leads.length||1;
+  const deals=leads.filter(l=>l.stage==='deal');
+  const rev=deals.reduce((a,l)=>a+(l.budget||0),0);
+  const conv=Math.round(deals.length/total*100);
+  const bySrc={};leads.forEach(l=>bySrc[l.source||'Boshqa']=(bySrc[l.source||'Boshqa']||0)+1);
+
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Hisobot ${monthName} ${now.getFullYear()}</title>
+  <style>body{font-family:Arial,sans-serif;padding:30px;color:#000}h1{font-size:20px;margin-bottom:4px}
+  .sub{font-size:13px;color:#666;margin-bottom:20px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .card{border:1px solid #ddd;border-radius:8px;padding:14px;text-align:center}.card-val{font-size:24px;font-weight:700;color:#10b981}
+  .card-lbl{font-size:11px;color:#666;margin-top:4px}table{width:100%;border-collapse:collapse;margin-top:16px}
+  th{background:#f5f5f5;padding:8px;font-size:12px;text-align:left;border:1px solid #ddd}
+  td{padding:8px;font-size:12px;border:1px solid #ddd}@media print{body{padding:10px}}</style></head><body>
+  <h1>Club Travel — Oylik hisobot</h1>
+  <div class="sub">${monthName} ${now.getFullYear()} · ${CP.full_name}</div>
+  <div class="grid">
+    <div class="card"><div class="card-val">${leads.length}</div><div class="card-lbl">Jami lidlar</div></div>
+    <div class="card"><div class="card-val">${deals.length}</div><div class="card-lbl">Bitimlar</div></div>
+    <div class="card"><div class="card-val">$${(rev/1000).toFixed(1)}k</div><div class="card-lbl">Summa</div></div>
+    <div class="card"><div class="card-val">${conv}%</div><div class="card-lbl">Konversiya</div></div>
+  </div>
+  <table><thead><tr><th>Manba</th><th>Lidlar soni</th><th>%</th></tr></thead><tbody>
+  ${Object.entries(bySrc).map(([s,n])=>`<tr><td>${s}</td><td>${n}</td><td>${Math.round(n/total*100)}%</td></tr>`).join('')}
+  </tbody></table>
+  <script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+
+async function reassignLead(leadId, agentId){
+  await sb.from('leads').update({owner_id:agentId}).eq('id',leadId);
+  notify('Tur agent o\'zgartirildi ✓');
+  if(page==='kanban')renderKanban();
+  else if(page==='all-leads')renderList(null);
+}
+
+function validatePhone(phone){
+  if(!phone)return true; // optional
+  const cleaned=phone.replace(/\s/g,'');
+  return /^[\+]?[0-9]{9,15}$/.test(cleaned);
+}
+
+async function checkDuplicate(phone, name){
+  if(!phone&&!name)return null;
+  let q=sb.from('leads').select('id,name,phone,stage');
+  if(phone)q=q.eq('phone',phone.replace(/\s/g,''));
+  const{data}=await q;
+  if(data&&data.length>0)return data[0];
+  return null;
+}
+
 async function onSearch(q){
   if(!q){
     if(page==='kanban')await renderKanban();
@@ -1699,6 +1951,24 @@ async function onSearch(q){
   document.getElementById('main-content').innerHTML=h;
 }
 
+
+// Real-time yangilanish
+let realtimeChannel = null;
+function startRealtime(){
+  if(realtimeChannel)realtimeChannel.unsubscribe();
+  realtimeChannel = sb.channel('leads-changes')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'leads'},payload=>{
+      const lead=payload.new;
+      // Faqat o'z lidlari uchun (agent) yoki admin uchun
+      if(CP.role==='admin'||(lead.owner_id===CP.id)){
+        notify('🆕 Yangi lid: '+lead.name);
+        if(page==='kanban')renderKanban();
+        else if(page==='dashboard')renderDashboard();
+      }
+    })
+    .subscribe();
+}
+
 // Auto-refresh dashboard every 60 seconds
 let refreshTimer=null;
 function startAutoRefresh(){
@@ -1710,6 +1980,17 @@ function startAutoRefresh(){
 
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function closeModalOut(e,id){if(e.target===document.getElementById(id))closeModal(id)}
+
+
+// Auth session monitoring
+sb.auth.onAuthStateChange((event, session) => {
+  if(event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED'){
+    if(event === 'SIGNED_OUT' && document.getElementById('app').classList.contains('active')){
+      notify('Sessiya tugadi. Qayta kiring.', 'error');
+      setTimeout(()=>signOut(), 2000);
+    }
+  }
+});
 
 (async()=>{
   const{data:{session}}=await sb.auth.getSession();
