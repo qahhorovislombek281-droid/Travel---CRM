@@ -391,6 +391,19 @@ textarea.fi{resize:vertical;min-height:70px}
 
 <div class="notif" id="notif"></div>
 
+<!-- Confirm Delete Modal -->
+<div class="overlay" id="confirm-modal">
+  <div class="modal" style="width:320px;text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">🗑️</div>
+    <div style="font-size:16px;font-weight:600;margin-bottom:8px">Lidni o'chirish</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Bu lidni o'chirishni tasdiqlaysizmi? Bu amalni qaytarib bo'lmaydi.</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" style="flex:1" onclick="closeModal('confirm-modal')">Bekor</button>
+      <button class="btn" style="flex:1;background:var(--red);color:#fff;border-color:var(--red)" onclick="confirmDelete()">O'chirish</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPA_URL = 'https://wyoidilxdbtirzgaxipo.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5b2lkaWx4ZGJ0aXJ6Z2F4aXBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNTU5ODEsImV4cCI6MjA5NDgzMTk4MX0.TXioAlvrjIGjwQIYeqZIlOkIxdg_Q4hSq6mnAzU0xyc';
@@ -401,7 +414,7 @@ let lang = localStorage.getItem('lang')||'uz';
 const LANGS = {
   uz: {
     dashboard:'🏠 Dashboard', kanban:'Voronka', mylist:'Lidlarim', tasks:'Vazifalar',
-    stats:'Statistika', employees:'Hodimlar', allleads:'Barcha lidlar',
+    stats:'Statistika', employees:'Tur agentlar', allleads:'Barcha lidlar',
     leaderboard:'🏆 Reyting', profile:'Mening profilim',
     addlid:"Lid qo'shish", signin:'Kirish', signup:"Ro'yxatdan o'tish",
     fullname:"To'liq ism", phone:'Telefon', email:'Email', password:'Parol',
@@ -439,7 +452,7 @@ const LANGS = {
   },
   ru: {
     dashboard:'🏠 Дашборд', kanban:'Воронка', mylist:'Мои лиды', tasks:'Задачи',
-    stats:'Статистика', employees:'Сотрудники', allleads:'Все лиды',
+    stats:'Статистика', employees:'Тур агенты', allleads:'Все лиды',
     leaderboard:'🏆 Рейтинг', profile:'Мой профиль',
     addlid:'Добавить лид', signin:'Войти', signup:'Регистрация',
     fullname:'Полное имя', phone:'Телефон', email:'Email', password:'Пароль',
@@ -750,7 +763,7 @@ async function renderDashboard(){
 
   <!-- Agent stats (admin only) -->
   ${isA?`<div class="chart-card">
-    <div class="chart-title">${monthName} — Hodimlar natijasi</div>
+    <div class="chart-title">${monthName} — Tur agentlar natijasi</div>
     <div style="overflow-x:auto">
     <table class="list-table"><thead><tr>
       <th>#</th><th>Hodim</th><th>Lidlar</th><th>Bitimlar</th><th>Summa</th><th>Konversiya</th>
@@ -1108,7 +1121,7 @@ async function renderEmployees(){
   setActions(`<button class="btn green" onclick="openAddLid()">${svgPlus()}${t('addlid')}</button>`);
   const{data:profs}=await sb.from('profiles').select('*').eq('role','agent');
   allProfs=profs||[];
-  if(!allProfs.length){document.getElementById('main-content').innerHTML=`<div class="empty"><div class="empty-icon">👥</div>${lang==='uz'?"Hozircha hodimlar yo'q.<br><small>Hodimlar ro'yxatdan o'tsa shu yerda ko'rinadi.</small>":'Сотрудников пока нет.<br><small>Они появятся здесь после регистрации.</small>'}</div>`;return}
+  if(!allProfs.length){document.getElementById('main-content').innerHTML=`<div class="empty"><div class="empty-icon">👥</div>${lang==='uz'?"Hozircha tur agentlar yo'q.<br><small>Tur agentlar ro'yxatdan o'tsa shu yerda ko'rinadi.</small>":'Сотрудников пока нет.<br><small>Они появятся здесь после регистрации.</small>'}</div>`;return}
   const allLeads=await getLeads();
   let h=`<div class="emp-grid">`;
   allProfs.forEach(p=>{
@@ -1140,7 +1153,7 @@ async function viewEmployee(id){
   const leads=await getLeads(id);
   const deals=leads.filter(l=>l.stage==='deal').length;
   const rev=deals?leads.filter(l=>l.stage==='deal').reduce((a,l)=>a+(l.budget||0),0):0;
-  let h=`<div class="back" onclick="navigate('employees')">← Hodimlar</div>
+  let h=`<div class="back" onclick="navigate('employees')">← Tur agentlar</div>
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:16px;box-shadow:var(--shadow)">
     <div class="emp-av" style="width:46px;height:46px;font-size:15px;background:var(--greenBg);color:var(--green)">${ini(viewProf.full_name)}</div>
     <div><div style="font-size:16px;font-weight:700">${viewProf.full_name}</div><div style="font-size:12px;color:var(--text3)">${viewProf.phone||'Telefon yo\'q'}</div></div>
@@ -1151,7 +1164,7 @@ async function viewEmployee(id){
     <div class="stat"><div class="stat-label">Bitim</div><div class="stat-val">${deals}</div></div>
     <div class="stat"><div class="stat-label">Summa</div><div class="stat-val">$${(rev/1000).toFixed(0)}k</div></div>
   </div>`;
-  if(!leads.length){h+='<div class="empty"><div class="empty-icon">📋</div>Bu hodimda lidlar yo\'q</div>';}
+  if(!leads.length){h+='<div class="empty"><div class="empty-icon">📋</div>Bu tur agentda lidlar yo'q</div>';}
   else{h+=`<div class="list-wrap"><table class="list-table"><thead><tr><th>Mijoz</th><th>Tur</th><th>Holat</th><th>Byudjet</th><th>Sana</th></tr></thead><tbody>`;
   leads.forEach(l=>{h+=`<tr onclick="openLeadDetail(${l.id})"><td><span class="prio-dot p-${l.priority||'warm'}"></span><strong>${l.name}</strong></td><td style="color:var(--text2)">${l.tour||'—'}</td><td><span class="sbadge ${sCls(l.stage)}">${sLabel(l.stage)}</span></td><td style="color:var(--green);font-weight:700">$${(l.budget||0).toLocaleString()}</td><td style="color:var(--text3)">${fmtDate(l.created_at)}</td></tr>`});
   h+=`</tbody></table></div>`;}
@@ -1384,6 +1397,9 @@ async function generateContract(leadId){
     <table>
       <tr><td>Tur yo'nalishi / Направление тура</td><td><strong>${l.tour||'—'}</strong></td></tr>
       <tr><td>Xizmat narxi / Стоимость услуг</td><td><strong>$${(l.budget||0).toLocaleString()} (USD)</strong></td></tr>
+      <tr><td>Jo'nash sanasi / Дата отправления</td><td>_______________</td></tr>
+      <tr><td>Qaytish sanasi / Дата возвращения</td><td>_______________</td></tr>
+      <tr><td>Turistlar soni / Количество туристов</td><td>_______________</td></tr>
       <tr><td>To'lov tartibi / Порядок оплаты</td><td>Shartnoma imzolangandan so'ng / После подписания договора</td></tr>
       <tr><td>Izoh / Примечание</td><td>${l.notes||'—'}</td></tr>
     </table>
@@ -1637,10 +1653,14 @@ async function saveLidEdit(){
 }
 
 async function deleteLid(){
-  const id=parseInt(document.getElementById('dp-title').dataset.leadId)||openLead;
-  if(!id)return;
-  if(!confirm(t('confirmdelete')))return;
-  await sb.from('leads').delete().eq('id',id);
+  if(!openLead)return;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+async function confirmDelete(){
+  closeModal('confirm-modal');
+  if(!openLead)return;
+  await sb.from('leads').delete().eq('id',openLead);
   closeDetail();
   notify(lang==='uz'?'Lid o\'chirildi':'Лид удалён');
   if(page==='kanban')await renderKanban();
@@ -1667,7 +1687,7 @@ async function onSearch(q){
   const{data:profs}=await sb.from('profiles').select('id,full_name');
   const pm={};(profs||[]).forEach(p=>pm[p.id]=p.full_name);
   let h=`<div style="font-size:13px;color:var(--text2);margin-bottom:12px">"<b>${q}</b>" — ${leads.length} ta natija</div>
-  <div class="list-wrap"><table class="list-table"><thead><tr><th>Mijoz</th><th>Tur</th><th>Holat</th><th>Byudjet</th><th>Hodim</th></tr></thead><tbody>`;
+  <div class="list-wrap"><table class="list-table"><thead><tr><th>Mijoz</th><th>Tur</th><th>Holat</th><th>Byudjet</th><th>Tur agent</th></tr></thead><tbody>`;
   leads.forEach(l=>{h+=`<tr onclick="openLeadDetail(${l.id})">
     <td><span class="prio-dot p-${l.priority||'warm'}"></span><strong>${l.name}</strong><br><small style="color:var(--text3)">${l.phone||''}</small></td>
     <td style="color:var(--text2)">${l.tour||'—'}</td>
