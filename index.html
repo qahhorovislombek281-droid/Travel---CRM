@@ -8,7 +8,271 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #ffffff; --bg2: #f8f9fb; --bg3: #f0f2f5; --bg4: #e8eaed;
+  --bg: #ffffff; --bg2: #f8f9fb; --bg3: #f0f2f5; --bg4: #e8eaed;import { createClient } from "jsr:@supabase/supabase-js@2";
+
+const VERIFY_TOKEN = "travelcrm2026";
+const TG_TOKEN = "8689616238:AAEMErEFtoR4YDOGTBisIFIclumqvK_zeoo";
+const TG_CHAT = "6331999423";
+const SUPABASE_URL = "https://wyoidilxdbtirzgaxipo.supabase.co";
+const SUPABASE_SERVICE_KEY = Deno.env.get("SERVICE_ROLE_KEY")!;
+
+const TOUR_KEYWORDS: Record<string, string> = {
+  "dubay": "Dubay", "dubai": "Dubay", "baa": "Dubay", "uae": "Dubay", "emirat": "Dubay",
+  "turkiya": "Turkiya", "turkey": "Turkiya", "istanbul": "Turkiya", "antalya": "Turkiya",
+  "misr": "Misr", "egypt": "Misr", "sharm": "Sharm el Sheikh", "hurgada": "Misr",
+  "maldiv": "Maldiv", "maldives": "Maldiv",
+  "tailand": "Tailand", "thailand": "Tailand", "bangkok": "Tailand", "phuket": "Tailand",
+  "bali": "Bali", "indoneziya": "Indoneziya", "indonesia": "Indoneziya",
+  "yevropa": "Yevropa", "europe": "Yevropa", "paris": "Yevropa", "london": "Yevropa",
+  "gruziya": "Gruziya", "georgia": "Gruziya", "tbilisi": "Gruziya", "batumi": "Gruziya",
+  "xitoy": "Xitoy", "china": "Xitoy", "beijing": "Xitoy",
+  "vyetnam": "Vyetnam", "vietnam": "Vyetnam", "hanoi": "Vyetnam",
+  "malayziya": "Malayziya", "malaysia": "Malayziya", "kuala": "Malayziya",
+  "qatar": "Qatar", "doha": "Qatar",
+  "ozarbayjon": "Ozarbayjon", "azerbaijan": "Ozarbayjon", "baku": "Ozarbayjon",
+  "rossiya": "Rossiya", "russia": "Rossiya", "moskva": "Rossiya",
+  "hainan": "Hainan", "kruiz": "Kruiz", "cruise": "Kruiz",
+};
+
+const SKIP_FIELDS = ["kim_bilan","sherik","family","oila","friend","yosh","age",
+  "dam_olish","type","qanday","how","when","qachon","byudjet","narx","price",
+  "bola","child","rejalash","plan"];
+
+function shouldSkipField(f: string): boolean {
+  return SKIP_FIELDS.some(s => f.toLowerCase().includes(s));
+}
+
+function detectTour(text: string): string {
+  if (!text) return "";
+  const lower = text.toLowerCase();
+  for (const [k, v] of Object.entries(TOUR_KEYWORDS)) {
+    if (lower.includes(k)) return v;
+  }
+  return "";
+}
+
+function normalizePhone(p: string): string {
+  if (!p) return "";
+  const c = p.replace(/[\s\-\(\)]/g, "");
+  if (c.startsWith("+998")) return c;
+  if (c.startsWith("998")) return "+" + c;
+  if (c.length === 9) return "+998" + c;
+  return c;
+}
+
+function formatFieldName(key: string): string {
+  return key.replace(/_/g, " ").replace(/\?/g, "").trim()
+    .replace(/^./, (c: string) => c.toUpperCase()).slice(0, 40);
+}
+
+async function sendTelegram(msg: string) {
+  try {
+    await fetch("https://api.telegram.org/bot" + TG_TOKEN + "/sendMessage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: TG_CHAT, text: msg, parse_mode: "HTML" }),
+    });
+  } catch (e) { console.error("TG error:", e); }
+}
+
+// Teng taqsimlash: yo'nalish bo'yicha filtr + eng kam lidli agent
+async function findBestAgent(
+  sb: ReturnType<typeof createClient>,
+  tour: string,
+  profs: Array<{id: string, full_name: string, specializations: string[]}>
+): Promise<{id: string, full_name: string} | null> {
+  if (!profs.length) return null;
+
+  // 1. Yo'nalish bo'yicha filtr
+  let candidates: typeof profs = [];
+  if (tour && tour !== "Aniqlanmagan") {
+    candidates = profs.filter(p =>
+      p.specializations?.some((s: string) =>
+        s.toLowerCase().includes(tour.toLowerCase()) ||
+        tour.toLowerCase().includes(s.toLowerCase().replace(" turi", "").trim())
+      )
+    );
+  }
+
+  // 2. "Barcha" yo'nalishli agentlar
+  if (!candidates.length) {
+    candidates = profs.filter(p =>
+      p.specializations?.some((s: string) => s.toLowerCase().includes("barcha"))
+    );
+  }
+
+  // 3. Hech kim yo'q — barchaga taqsimlash
+  if (!candidates.length) candidates = profs;
+
+  // 4. Har bir kandidatning JAMI aktiv lidlari (new+contact+offer)
+  const counts = await Promise.all(
+    candidates.map(async (p) => {
+      const { count } = await sb.from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", p.id)
+        .in("stage", ["new", "contact", "offer"]);
+      return { agent: p, count: count ?? 0 };
+    })
+  );
+
+  // 5. Eng kam lidli agentni tanlash
+  counts.sort((a, b) => a.count - b.count);
+  console.log("Agent distribution:", counts.map(c => c.agent.full_name + ":" + c.count));
+  return counts[0].agent;
+}
+
+Deno.serve(async (req) => {
+  const url = new URL(req.url);
+
+  // Webhook verification
+  if (req.method === "GET") {
+    const mode = url.searchParams.get("hub.mode");
+    const token = url.searchParams.get("hub.verify_token");
+    const challenge = url.searchParams.get("hub.challenge");
+    if (mode === "subscribe" && token === VERIFY_TOKEN)
+      return new Response(challenge, { status: 200 });
+    return new Response("Forbidden", { status: 403 });
+  }
+
+  if (req.method === "POST") {
+    const body = await req.json();
+    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    for (const entry of body.entry || []) {
+      for (const change of entry.changes || []) {
+        if (change.field !== "leadgen" && !change.value?.leadgen_id) continue;
+
+        const leadgenId = change.value.leadgen_id;
+
+        // Dublikat tekshirish — bir xil leadgen_id qayta kelmasin
+        const { data: existing } = await sb.from("leads")
+          .select("id")
+          .eq("notes", "fb_leadgen_id:" + leadgenId)
+          .maybeSingle();
+        if (existing) {
+          console.log("Duplicate leadgen_id skipped:", leadgenId);
+          continue;
+        }
+
+        // Facebook dan ma'lumot olish
+        const fbRes = await fetch(
+          "https://graph.facebook.com/v19.0/" + leadgenId +
+          "?fields=field_data&access_token=" + Deno.env.get("FB_PAGE_TOKEN")
+        );
+        const fbData = await fbRes.json();
+
+        if (fbData.error) {
+          console.error("FB API error:", fbData.error);
+          continue;
+        }
+
+        const fields: Record<string, string> = {};
+        for (const f of fbData.field_data || []) {
+          fields[f.name] = f.values?.[0] || "";
+        }
+
+        // Test lid tekshirish
+        const isTest = Object.values(fields).some(v =>
+          v.startsWith("<test") || v.includes("test_value")
+        );
+        if (isTest) {
+          console.log("Test lead skipped:", leadgenId);
+          continue;
+        }
+
+        // Ism
+        const name = fields["ismingiz?"] ||
+          fields["full_name"] || fields["name"] || fields["first_name"] ||
+          Object.values(fields).find(v =>
+            v && v.length > 1 && !v.includes("+") && !v.match(/^\d+$/)
+          ) || "Noma'lum";
+
+        // Telefon
+        const rawPhone = fields["aktiv_telefon_raqamingiz?"] ||
+          fields["phone_number"] || fields["phone"] ||
+          Object.values(fields).find(v =>
+            v && (v.includes("+998") || v.replace(/\D/g, "").length >= 9)
+          ) || "";
+        const phone = normalizePhone(rawPhone);
+
+        // Yo'nalish
+        let tour = "";
+        for (const [key, val] of Object.entries(fields)) {
+          if (shouldSkipField(key)) continue;
+          const d = detectTour(val);
+          if (d) { tour = d; break; }
+        }
+        if (!tour) {
+          for (const key of Object.keys(fields)) {
+            if (shouldSkipField(key)) continue;
+            const d = detectTour(key);
+            if (d) { tour = d; break; }
+          }
+        }
+        if (!tour) tour = "Aniqlanmagan";
+
+        const email = fields["email"] || "";
+        const skipKeys = ["ismingiz?", "full_name", "name", "first_name",
+          "phone", "phone_number", "aktiv_telefon_raqamingiz?", "email"];
+
+        const extraLines: string[] = [];
+        const notesParts: string[] = ["fb_leadgen_id:" + leadgenId];
+        if (email) notesParts.push("Email: " + email);
+
+        for (const [key, val] of Object.entries(fields)) {
+          if (!val || val.startsWith("<test")) continue;
+          if (skipKeys.includes(key)) continue;
+          extraLines.push("<b>" + formatFieldName(key) + ":</b> " + val);
+          notesParts.push(formatFieldName(key) + ": " + val);
+        }
+
+        const notes = notesParts.join("\n");
+
+        // Agent tanlash
+        const { data: profs } = await sb.from("profiles")
+          .select("id, full_name, specializations")
+          .eq("role", "agent");
+
+        const bestAgent = await findBestAgent(sb, tour, profs || []);
+
+        // Lid yaratish
+        const { error: insertError } = await sb.from("leads").insert({
+          name,
+          phone,
+          tour: tour === "Aniqlanmagan" ? "Facebook Lead" : tour,
+          source: "Facebook Ads",
+          priority: "hot",
+          stage: "new",
+          notes,
+          owner_id: bestAgent?.id || null,
+        });
+
+        if (insertError) {
+          console.error("Insert error:", insertError);
+          continue;
+        }
+
+        // Telegram xabar
+        const tgLines = [
+          "Yangi lid - Facebook Ads",
+          "",
+          "Ism: " + name,
+          "Telefon: " + (phone || "—"),
+          "Tur: " + (tour === "Aniqlanmagan" ? "Aniqlanmagan" : tour),
+        ];
+        if (extraLines.length) tgLines.push(...extraLines);
+        tgLines.push("Agent: " + (bestAgent?.full_name || "Tayinlanmagan"));
+
+        await sendTelegram(tgLines.join("\n"));
+      }
+    }
+
+    return new Response("ok", { status: 200 });
+  }
+
+  return new Response("Method not allowed", { status: 405 });
+});
+
   --border: #e5e7eb; --border2: #d1d5db;
   --text: #111827; --text2: #6b7280; --text3: #9ca3af;
   --green: #10b981; --green2: #059669; --greenBg: #ecfdf5;
@@ -2075,7 +2339,271 @@ sb.auth.onAuthStateChange((event, session) => {
 
 (async()=>{
   const{data:{session}}=await sb.auth.getSession();
-  if(session?.user)await loadUser(session.user);
+  if(session?.user)await loadUser(session.user);import { createClient } from "jsr:@supabase/supabase-js@2";
+
+const VERIFY_TOKEN = "travelcrm2026";
+const TG_TOKEN = "8689616238:AAEMErEFtoR4YDOGTBisIFIclumqvK_zeoo";
+const TG_CHAT = "6331999423";
+const SUPABASE_URL = "https://wyoidilxdbtirzgaxipo.supabase.co";
+const SUPABASE_SERVICE_KEY = Deno.env.get("SERVICE_ROLE_KEY")!;
+
+const TOUR_KEYWORDS: Record<string, string> = {
+  "dubay": "Dubay", "dubai": "Dubay", "baa": "Dubay", "uae": "Dubay", "emirat": "Dubay",
+  "turkiya": "Turkiya", "turkey": "Turkiya", "istanbul": "Turkiya", "antalya": "Turkiya",
+  "misr": "Misr", "egypt": "Misr", "sharm": "Sharm el Sheikh", "hurgada": "Misr",
+  "maldiv": "Maldiv", "maldives": "Maldiv",
+  "tailand": "Tailand", "thailand": "Tailand", "bangkok": "Tailand", "phuket": "Tailand",
+  "bali": "Bali", "indoneziya": "Indoneziya", "indonesia": "Indoneziya",
+  "yevropa": "Yevropa", "europe": "Yevropa", "paris": "Yevropa", "london": "Yevropa",
+  "gruziya": "Gruziya", "georgia": "Gruziya", "tbilisi": "Gruziya", "batumi": "Gruziya",
+  "xitoy": "Xitoy", "china": "Xitoy", "beijing": "Xitoy",
+  "vyetnam": "Vyetnam", "vietnam": "Vyetnam", "hanoi": "Vyetnam",
+  "malayziya": "Malayziya", "malaysia": "Malayziya", "kuala": "Malayziya",
+  "qatar": "Qatar", "doha": "Qatar",
+  "ozarbayjon": "Ozarbayjon", "azerbaijan": "Ozarbayjon", "baku": "Ozarbayjon",
+  "rossiya": "Rossiya", "russia": "Rossiya", "moskva": "Rossiya",
+  "hainan": "Hainan", "kruiz": "Kruiz", "cruise": "Kruiz",
+};
+
+const SKIP_FIELDS = ["kim_bilan","sherik","family","oila","friend","yosh","age",
+  "dam_olish","type","qanday","how","when","qachon","byudjet","narx","price",
+  "bola","child","rejalash","plan"];
+
+function shouldSkipField(f: string): boolean {
+  return SKIP_FIELDS.some(s => f.toLowerCase().includes(s));
+}
+
+function detectTour(text: string): string {
+  if (!text) return "";
+  const lower = text.toLowerCase();
+  for (const [k, v] of Object.entries(TOUR_KEYWORDS)) {
+    if (lower.includes(k)) return v;
+  }
+  return "";
+}
+
+function normalizePhone(p: string): string {
+  if (!p) return "";
+  const c = p.replace(/[\s\-\(\)]/g, "");
+  if (c.startsWith("+998")) return c;
+  if (c.startsWith("998")) return "+" + c;
+  if (c.length === 9) return "+998" + c;
+  return c;
+}
+
+function formatFieldName(key: string): string {
+  return key.replace(/_/g, " ").replace(/\?/g, "").trim()
+    .replace(/^./, (c: string) => c.toUpperCase()).slice(0, 40);
+}
+
+async function sendTelegram(msg: string) {
+  try {
+    await fetch("https://api.telegram.org/bot" + TG_TOKEN + "/sendMessage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: TG_CHAT, text: msg, parse_mode: "HTML" }),
+    });
+  } catch (e) { console.error("TG error:", e); }
+}
+
+// Teng taqsimlash: yo'nalish bo'yicha filtr + eng kam lidli agent
+async function findBestAgent(
+  sb: ReturnType<typeof createClient>,
+  tour: string,
+  profs: Array<{id: string, full_name: string, specializations: string[]}>
+): Promise<{id: string, full_name: string} | null> {
+  if (!profs.length) return null;
+
+  // 1. Yo'nalish bo'yicha filtr
+  let candidates: typeof profs = [];
+  if (tour && tour !== "Aniqlanmagan") {
+    candidates = profs.filter(p =>
+      p.specializations?.some((s: string) =>
+        s.toLowerCase().includes(tour.toLowerCase()) ||
+        tour.toLowerCase().includes(s.toLowerCase().replace(" turi", "").trim())
+      )
+    );
+  }
+
+  // 2. "Barcha" yo'nalishli agentlar
+  if (!candidates.length) {
+    candidates = profs.filter(p =>
+      p.specializations?.some((s: string) => s.toLowerCase().includes("barcha"))
+    );
+  }
+
+  // 3. Hech kim yo'q — barchaga taqsimlash
+  if (!candidates.length) candidates = profs;
+
+  // 4. Har bir kandidatning JAMI aktiv lidlari (new+contact+offer)
+  const counts = await Promise.all(
+    candidates.map(async (p) => {
+      const { count } = await sb.from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", p.id)
+        .in("stage", ["new", "contact", "offer"]);
+      return { agent: p, count: count ?? 0 };
+    })
+  );
+
+  // 5. Eng kam lidli agentni tanlash
+  counts.sort((a, b) => a.count - b.count);
+  console.log("Agent distribution:", counts.map(c => c.agent.full_name + ":" + c.count));
+  return counts[0].agent;
+}
+
+Deno.serve(async (req) => {
+  const url = new URL(req.url);
+
+  // Webhook verification
+  if (req.method === "GET") {
+    const mode = url.searchParams.get("hub.mode");
+    const token = url.searchParams.get("hub.verify_token");
+    const challenge = url.searchParams.get("hub.challenge");
+    if (mode === "subscribe" && token === VERIFY_TOKEN)
+      return new Response(challenge, { status: 200 });
+    return new Response("Forbidden", { status: 403 });
+  }
+
+  if (req.method === "POST") {
+    const body = await req.json();
+    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    for (const entry of body.entry || []) {
+      for (const change of entry.changes || []) {
+        if (change.field !== "leadgen" && !change.value?.leadgen_id) continue;
+
+        const leadgenId = change.value.leadgen_id;
+
+        // Dublikat tekshirish — bir xil leadgen_id qayta kelmasin
+        const { data: existing } = await sb.from("leads")
+          .select("id")
+          .eq("notes", "fb_leadgen_id:" + leadgenId)
+          .maybeSingle();
+        if (existing) {
+          console.log("Duplicate leadgen_id skipped:", leadgenId);
+          continue;
+        }
+
+        // Facebook dan ma'lumot olish
+        const fbRes = await fetch(
+          "https://graph.facebook.com/v19.0/" + leadgenId +
+          "?fields=field_data&access_token=" + Deno.env.get("FB_PAGE_TOKEN")
+        );
+        const fbData = await fbRes.json();
+
+        if (fbData.error) {
+          console.error("FB API error:", fbData.error);
+          continue;
+        }
+
+        const fields: Record<string, string> = {};
+        for (const f of fbData.field_data || []) {
+          fields[f.name] = f.values?.[0] || "";
+        }
+
+        // Test lid tekshirish
+        const isTest = Object.values(fields).some(v =>
+          v.startsWith("<test") || v.includes("test_value")
+        );
+        if (isTest) {
+          console.log("Test lead skipped:", leadgenId);
+          continue;
+        }
+
+        // Ism
+        const name = fields["ismingiz?"] ||
+          fields["full_name"] || fields["name"] || fields["first_name"] ||
+          Object.values(fields).find(v =>
+            v && v.length > 1 && !v.includes("+") && !v.match(/^\d+$/)
+          ) || "Noma'lum";
+
+        // Telefon
+        const rawPhone = fields["aktiv_telefon_raqamingiz?"] ||
+          fields["phone_number"] || fields["phone"] ||
+          Object.values(fields).find(v =>
+            v && (v.includes("+998") || v.replace(/\D/g, "").length >= 9)
+          ) || "";
+        const phone = normalizePhone(rawPhone);
+
+        // Yo'nalish
+        let tour = "";
+        for (const [key, val] of Object.entries(fields)) {
+          if (shouldSkipField(key)) continue;
+          const d = detectTour(val);
+          if (d) { tour = d; break; }
+        }
+        if (!tour) {
+          for (const key of Object.keys(fields)) {
+            if (shouldSkipField(key)) continue;
+            const d = detectTour(key);
+            if (d) { tour = d; break; }
+          }
+        }
+        if (!tour) tour = "Aniqlanmagan";
+
+        const email = fields["email"] || "";
+        const skipKeys = ["ismingiz?", "full_name", "name", "first_name",
+          "phone", "phone_number", "aktiv_telefon_raqamingiz?", "email"];
+
+        const extraLines: string[] = [];
+        const notesParts: string[] = ["fb_leadgen_id:" + leadgenId];
+        if (email) notesParts.push("Email: " + email);
+
+        for (const [key, val] of Object.entries(fields)) {
+          if (!val || val.startsWith("<test")) continue;
+          if (skipKeys.includes(key)) continue;
+          extraLines.push("<b>" + formatFieldName(key) + ":</b> " + val);
+          notesParts.push(formatFieldName(key) + ": " + val);
+        }
+
+        const notes = notesParts.join("\n");
+
+        // Agent tanlash
+        const { data: profs } = await sb.from("profiles")
+          .select("id, full_name, specializations")
+          .eq("role", "agent");
+
+        const bestAgent = await findBestAgent(sb, tour, profs || []);
+
+        // Lid yaratish
+        const { error: insertError } = await sb.from("leads").insert({
+          name,
+          phone,
+          tour: tour === "Aniqlanmagan" ? "Facebook Lead" : tour,
+          source: "Facebook Ads",
+          priority: "hot",
+          stage: "new",
+          notes,
+          owner_id: bestAgent?.id || null,
+        });
+
+        if (insertError) {
+          console.error("Insert error:", insertError);
+          continue;
+        }
+
+        // Telegram xabar
+        const tgLines = [
+          "Yangi lid - Facebook Ads",
+          "",
+          "Ism: " + name,
+          "Telefon: " + (phone || "—"),
+          "Tur: " + (tour === "Aniqlanmagan" ? "Aniqlanmagan" : tour),
+        ];
+        if (extraLines.length) tgLines.push(...extraLines);
+        tgLines.push("Agent: " + (bestAgent?.full_name || "Tayinlanmagan"));
+
+        await sendTelegram(tgLines.join("\n"));
+      }
+    }
+
+    return new Response("ok", { status: 200 });
+  }
+
+  return new Response("Method not allowed", { status: 405 });
+});
+
 })();
 </script>
 </body>
