@@ -345,12 +345,12 @@ textarea.fi{resize:vertical;min-height:70px}
     <div class="fg"><label class="fl">Telefon</label><input class="fi" id="ef-phone" placeholder="+998 90 000 00 00"></div>
     <div class="fg"><label class="fl">Tur yo'nalishi</label>
       <select class="fi" id="ef-tour" onchange="toggleCustomTour('ef-custom-tour',this.value)">
-        <option>Dubay тури</option><option>Turkiya тури</option><option>Misr тури</option>
-        <option>Maldiv тури</option><option>Tailand тури</option><option>Bali тури</option>
-        <option>Yevropa тури</option><option>Gruziya тури</option><option>Xitoy тури</option>
-        <option>Vyetnam тури</option><option>Malayziya тури</option><option>Sharm el Sheikh тури</option>
-        <option>Hainan тури</option><option>Indoneziya тури</option><option>Qatar тури</option>
-        <option>Ozarbayjon тури</option><option>Rossiya тури</option><option>Kruiz</option>
+        <option>Dubay turi</option><option>Turkiya turi</option><option>Misr turi</option>
+        <option>Maldiv turi</option><option>Tailand turi</option><option>Bali turi</option>
+        <option>Yevropa turi</option><option>Gruziya turi</option><option>Xitoy turi</option>
+        <option>Vyetnam turi</option><option>Malayziya turi</option><option>Sharm el Sheikh turi</option>
+        <option>Hainan turi</option><option>Indoneziya turi</option><option>Qatar turi</option>
+        <option>Ozarbayjon turi</option><option>Rossiya turi</option><option>Kruiz</option>
         <option value="other">✏️ Boshqa (yozish)</option>
       </select>
       <input class="fi" id="ef-custom-tour" placeholder="Yo'nalishni yozing..." style="display:none;margin-top:8px">
@@ -378,23 +378,23 @@ textarea.fi{resize:vertical;min-height:70px}
     <div class="fg"><label class="fl">Telefon</label><input class="fi" id="f-phone" placeholder="+998 90 000 00 00"></div>
     <div class="fg"><label class="fl">Tur yo'nalishi</label>
       <select class="fi" id="f-tour" onchange="toggleCustomTour('f-custom-tour',this.value)">
-        <option>Dubay тури</option>
-        <option>Turkiya тури</option>
-        <option>Misr тури</option>
-        <option>Maldiv тури</option>
-        <option>Tailand тури</option>
-        <option>Bali тури</option>
-        <option>Yevropa тури</option>
-        <option>Gruziya тури</option>
-        <option>Xitoy тури</option>
-        <option>Vyetnam тури</option>
-        <option>Malayziya тури</option>
-        <option>Sharm el Sheikh тури</option>
-        <option>Hainan тури</option>
-        <option>Indoneziya тури</option>
-        <option>Qatar тури</option>
-        <option>Ozarbayjon тури</option>
-        <option>Rossiya тури</option>
+        <option>Dubay turi</option>
+        <option>Turkiya turi</option>
+        <option>Misr turi</option>
+        <option>Maldiv turi</option>
+        <option>Tailand turi</option>
+        <option>Bali turi</option>
+        <option>Yevropa turi</option>
+        <option>Gruziya turi</option>
+        <option>Xitoy turi</option>
+        <option>Vyetnam turi</option>
+        <option>Malayziya turi</option>
+        <option>Sharm el Sheikh turi</option>
+        <option>Hainan turi</option>
+        <option>Indoneziya turi</option>
+        <option>Qatar turi</option>
+        <option>Ozarbayjon turi</option>
+        <option>Rossiya turi</option>
         <option>Kruiz</option>
         <option value="other">✏️ Boshqa (yozish)</option>
       </select>
@@ -576,7 +576,36 @@ function toggleLangLogin(){
   initStages();
 }
 
-function notify(msg,type='success'){const el=document.getElementById('notif');el.textContent=msg;el.className='notif show '+type;setTimeout(()=>el.className='notif',3000)}
+// Bildirishnomalar queue
+let notifTimer=null;
+const notifQueue=[];
+function notify(msg,type='success'){
+  notifQueue.push({msg,type});
+  if(notifQueue.length===1)showNextNotif();
+}
+function showNextNotif(){
+  if(!notifQueue.length)return;
+  const{msg,type}=notifQueue[0];
+  const el=document.getElementById('notif');
+  el.textContent=msg;el.className='notif show '+type;
+  if(notifTimer)clearTimeout(notifTimer);
+  notifTimer=setTimeout(()=>{
+    el.className='notif';
+    notifQueue.shift();
+    setTimeout(showNextNotif,300);
+  },2500);
+}
+
+// ESC tugmasi bilan modal yopish
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    ['lid-modal','edit-modal','confirm-modal'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el&&el.classList.contains('open'))closeModal(id);
+    });
+    if(document.getElementById('detail-panel')?.classList.contains('open'))closeDetail();
+  }
+});
 
 function toggleTheme(){isDark=!isDark;document.documentElement.setAttribute('data-theme',isDark?'dark':'');document.getElementById('theme-btn').textContent=isDark?'☀️':'🌙';localStorage.setItem('theme',isDark?'dark':'')}
 if(localStorage.getItem('theme')==='dark'){isDark=true;document.documentElement.setAttribute('data-theme','dark');document.getElementById('theme-btn') && (document.getElementById('theme-btn').textContent='☀️')}
@@ -685,13 +714,21 @@ async function navigate(p){
 }
 
 async function getLeads(ownerId=null, opts={}){
-  const{limit=200, stage=null, sortBy='created_at', sortAsc=false}=opts;
-  let q=sb.from('leads').select('*').order(sortBy,{ascending:sortAsc}).limit(limit);
+  const{limit=200, stage=null, sortBy='created_at', sortAsc=false, offset=0}=opts;
+  let q=sb.from('leads').select('*').order(sortBy,{ascending:sortAsc}).range(offset, offset+limit-1);
   if(ownerId)q=q.eq('owner_id',ownerId);
   if(stage)q=q.eq('stage',stage);
   const{data,error}=await q;
   if(error){notify('Ma\'lumot yuklashda xato: '+error.message,'error');return[];}
   return data||[];
+}
+
+// Jami lid sonini olish
+async function getLeadsCount(ownerId=null){
+  let q=sb.from('leads').select('id',{count:'exact',head:true});
+  if(ownerId)q=q.eq('owner_id',ownerId);
+  const{count}=await q;
+  return count||0;
 }
 
 // Button loading state
@@ -712,6 +749,8 @@ function exportCSV(leads, filename='leads.csv'){
 
 // Sort state
 let sortState={col:'created_at',asc:false};
+let listOffset=0;
+let listAllLoaded=false;
 
 function sortBy(col){
   if(sortState.col===col)sortState.asc=!sortState.asc;
@@ -914,52 +953,82 @@ async function dropLid(e,stage){
   dragId=null;await renderKanban();
 }
 
-async function renderList(ownerId=null){
-  const leads=await getLeads(ownerId,{sortBy:sortState.col,sortAsc:sortState.asc});
-  setActions(`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-    <select class="fi" style="padding:7px 10px;width:auto" onchange="filterState.stage=this.value;renderList(${ownerId?`'${ownerId}'`:'null'})">
-      <option value="">Barcha holat</option>
-      ${STAGES.map(s=>`<option value="${s.id}"${filterState.stage===s.id?' selected':''}>${s.label}</option>`).join('')}
-    </select>
-    <button class="btn" onclick="exportLeadsCSV(${ownerId?`'${ownerId}'`:'null'})">📥 CSV</button>
-    ${addLidBtn()}
-  </div>`);
+async function renderList(ownerId=null, append=false){
+  if(!append)listOffset=0;
+  const LIMIT=100;
+  const leads=await getLeads(ownerId,{sortBy:sortState.col,sortAsc:sortState.asc,limit:LIMIT,offset:listOffset});
+  listAllLoaded=leads.length<LIMIT;
 
-  // Apply filter
+  if(!append){
+    setActions(`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select class="fi" style="padding:7px 10px;width:auto" onchange="filterState.stage=this.value;renderList(${ownerId?`'${ownerId}'`:'null'})">
+        <option value="">Barcha holat</option>
+        ${STAGES.map(s=>`<option value="${s.id}"${filterState.stage===s.id?' selected':''}>${s.label}</option>`).join('')}
+      </select>
+      <button class="btn" onclick="exportLeadsCSV(${ownerId?`'${ownerId}'`:'null'})">📥 CSV</button>
+      ${addLidBtn()}
+    </div>`);
+  }
+
   const filtered=filterState.stage?leads.filter(l=>l.stage===filterState.stage):leads;
 
-  if(!filtered.length){document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">📋</div>Hozircha lidlar yo\'q</div>';return}
+  if(!append&&!filtered.length){
+    document.getElementById('main-content').innerHTML='<div class="empty"><div class="empty-icon">📋</div>Hozircha lidlar yo\'q</div>';
+    return;
+  }
+
   const{data:profs}=await sb.from('profiles').select('id,full_name');
   const pm={};(profs||[]).forEach(p=>pm[p.id]=p.full_name);
 
   function sortIcon(col){return sortState.col===col?(sortState.asc?'↑':'↓'):''}
 
-  let h=`<div style="font-size:13px;color:var(--text2);margin-bottom:10px">${filtered.length} ta lid</div>
-  <div class="list-wrap"><table class="list-table"><thead><tr>
-    <th style="cursor:pointer" onclick="sortBy('name')">Mijoz ${sortIcon('name')}</th>
-    <th>Tur</th><th>Manba</th>
-    <th style="cursor:pointer" onclick="sortBy('stage')">Holat ${sortIcon('stage')}</th>
-    <th style="cursor:pointer" onclick="sortBy('budget')">Byudjet ${sortIcon('budget')}</th>
-    <th>Tur agent</th>
-    <th style="cursor:pointer" onclick="sortBy('created_at')">Sana ${sortIcon('created_at')}</th>
-  </tr></thead><tbody>`;
-  filtered.forEach(l=>{h+=`<tr onclick="openLeadDetail(${l.id})">
-    <td><span class="prio-dot p-${l.priority||'warm'}"></span><strong>${l.name}</strong></td>
-    <td style="color:var(--text2)">${l.tour||'—'}</td>
-    <td style="color:var(--text2)">${l.source||'—'}</td>
-    <td><span class="sbadge ${sCls(l.stage)}">${sLabel(l.stage)}</span></td>
-    <td style="color:var(--green);font-weight:700">$${(l.budget||0).toLocaleString()}</td>
-    <td style="color:var(--text2)">${pm[l.owner_id]||'—'}</td>
-    <td style="color:var(--text3)">${fmtDate(l.created_at)}</td>
-  </tr>`});
+  let h=``;
+  if(!append){
+    h=`<div style="font-size:13px;color:var(--text2);margin-bottom:10px">${listOffset+filtered.length} ta lid yüklandi</div>
+    <div class="list-wrap"><table class="list-table" id="leads-table"><thead><tr>
+      <th style="cursor:pointer" onclick="sortBy('name')">Mijoz ${sortIcon('name')}</th>
+      <th>Tur</th><th>Manba</th>
+      <th style="cursor:pointer" onclick="sortBy('stage')">Holat ${sortIcon('stage')}</th>
+      <th style="cursor:pointer" onclick="sortBy('budget')">Byudjet ${sortIcon('budget')}</th>
+      <th>Tur agent</th>
+      <th style="cursor:pointer" onclick="sortBy('created_at')">Sana ${sortIcon('created_at')}</th>
+    </tr></thead><tbody id="leads-tbody">`;
+  } else {
+    const tbody=document.getElementById('leads-tbody');
+    if(tbody){
+      filtered.forEach(l=>{tbody.insertAdjacentHTML('beforeend',leadRow(l,pm));});
+      listOffset+=leads.length;
+      const btn=document.getElementById('load-more-btn');
+      if(btn)btn.style.display=listAllLoaded?'none':'block';
+      return;
+    }
+  }
+
+  filtered.forEach(l=>{h+=leadRow(l,pm);});
   h+=`</tbody></table></div>`;
+  if(!listAllLoaded){
+    h+=`<div style="text-align:center;margin-top:16px">
+      <button id="load-more-btn" class="btn" onclick="loadMoreLeads('${ownerId||''}')">⬇️ Ko'proq yuklash</button>
+    </div>`;
+  }
   document.getElementById('main-content').innerHTML=h;
+  listOffset+=leads.length;
 }
 
-async function exportLeadsCSV(ownerId){
-  const leads=await getLeads(ownerId||null);
-  exportCSV(leads, `clubtravel_lidlar_${new Date().toLocaleDateString('uz-UZ')}.csv`);
-  notify('CSV yuklab olindi! ✓');
+function leadRow(l,pm){
+  return `<tr onclick="openLeadDetail(${l.id})">
+    <td><span class="prio-dot p-${l.priority||'warm'}"></span><strong>${esc(l.name)}</strong></td>
+    <td style="color:var(--text2)">${esc(l.tour)||'—'}</td>
+    <td style="color:var(--text2)">${esc(l.source)||'—'}</td>
+    <td><span class="sbadge ${sCls(l.stage)}">${sLabel(l.stage)}</span></td>
+    <td style="color:var(--green);font-weight:700">${(l.total_price||l.budget||0)>0?'$'+(l.total_price||l.budget||0).toLocaleString():'—'}</td>
+    <td style="color:var(--text2)">${esc(pm[l.owner_id]||'—')}</td>
+    <td style="color:var(--text3)">${fmtDate(l.created_at)}</td>
+  </tr>`;
+}
+
+async function loadMoreLeads(ownerId){
+  await renderList(ownerId||null, true);
 }
 
 async function openLeadDetail(id){
@@ -1228,7 +1297,7 @@ async function renderStats(){
     </div>
     <div class="chart-card">
       <div class="chart-title">${t('tours')}</div>
-      ${Object.entries(byTour).map(([s,n])=>`<div class="bar-row"><div class="bar-lbl" style="font-size:11px">${s.replace(' тури','')}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxTour*100)}%;background:var(--blue)"></div></div><div class="bar-val">${n}</div></div>`).join('')}
+      ${Object.entries(byTour).map(([s,n])=>`<div class="bar-row"><div class="bar-lbl" style="font-size:11px">${s.replace(' turi','')}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxTour*100)}%;background:var(--blue)"></div></div><div class="bar-val">${n}</div></div>`).join('')}
     </div>
   </div>`;
   document.getElementById('main-content').innerHTML=h;
@@ -1245,6 +1314,7 @@ async function renderEmployees(){
     const ml=allLeads.filter(l=>l.owner_id===p.id);
     const deals=ml.filter(l=>l.stage==='deal').length;
     const rev=ml.filter(l=>l.stage==='deal').reduce((a,l)=>a+(l.budget||0),0);
+    const activeLeads=ml.filter(l=>['new','contact','offer'].includes(l.stage)).length;
     h+=`<div class="emp-card" onclick="viewEmployee('${p.id}')">
       <div class="emp-head">
         <div class="emp-av ${avc(p.id)}" style="background:var(--greenBg);color:var(--green);position:relative;overflow:hidden">
@@ -1262,6 +1332,10 @@ async function renderEmployees(){
         <div class="emp-stat"><div class="emp-stat-val">${ml.length}</div><div class="emp-stat-lbl">${t('leadscol')}</div></div>
         <div class="emp-stat"><div class="emp-stat-val">${deals}</div><div class="emp-stat-lbl">${t('dealscol')}</div></div>
         <div class="emp-stat"><div class="emp-stat-val">$${(rev/1000).toFixed(0)}k</div><div class="emp-stat-lbl">${t('sumcol')}</div></div>
+        <div class="emp-stat">
+          <div class="emp-stat-val" style="color:${activeLeads>15?'var(--red)':activeLeads>8?'var(--amber)':'var(--green)'}">${activeLeads}</div>
+          <div class="emp-stat-lbl">Aktiv</div>
+        </div>
       </div>
     </div>`;
   });
@@ -1292,7 +1366,7 @@ async function viewEmployee(id){
     <div>
       <div style="font-size:16px;font-weight:700">${viewProf.full_name}</div>
       <div style="font-size:12px;color:var(--text3)">${viewProf.phone||"Telefon yo'q"}</div>
-      ${viewProf.specializations?.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${viewProf.specializations.slice(0,3).map(s=>`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--greenBg);color:var(--green)">${s.replace(' тури','')}</span>`).join('')}${viewProf.specializations.length>3?`<span style="font-size:10px;color:var(--text3)">+${viewProf.specializations.length-3}</span>`:''}</div>`:''}
+      ${viewProf.specializations?.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${viewProf.specializations.slice(0,3).map(s=>`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--greenBg);color:var(--green)">${s.replace(' turi','')}</span>`).join('')}${viewProf.specializations.length>3?`<span style="font-size:10px;color:var(--text3)">+${viewProf.specializations.length-3}</span>`:''}</div>`:''}
     </div>
     ${viewProf.last_login?`<div style="margin-left:auto;text-align:right"><div style="font-size:10px;color:var(--text3)">Oxirgi kirish</div><div style="font-size:11px;color:var(--text2)">${fmtDate(viewProf.last_login)}</div></div>`:''}
   </div>
@@ -1498,7 +1572,7 @@ async function addLid(){
       // Yo'nalish bo'yicha avtomatik topish
       const{data:profs}=await sb.from('profiles').select('id,full_name,specializations').eq('role','agent');
       const tourLower=tour.toLowerCase();
-      const matched=(profs||[]).find(p=>p.specializations&&p.specializations.some(s=>tourLower.includes(s.toLowerCase().replace(' тури',''))||s.toLowerCase().includes(tourLower.replace(' тури',''))));
+      const matched=(profs||[]).find(p=>p.specializations&&p.specializations.some(s=>tourLower.includes(s.toLowerCase().replace(' turi',''))||s.toLowerCase().includes(tourLower.replace(' turi',''))));
       if(matched){owner_id=matched.id;notify(`Lid ${matched.full_name.split(' ')[0]} ga biriktirildi 🎯`);}
       else{const all=(profs||[]).find(p=>p.specializations&&p.specializations.some(s=>s.toLowerCase().includes('barcha')));owner_id=all?.id||(profs||[])[0]?.id||CP.id;}
     }
@@ -1583,7 +1657,7 @@ async function generateContract(leadId){
       <tr><td>Xizmat narxi / Стоимость услуг</td><td><strong>$${(l.budget||0).toLocaleString()} (USD)</strong></td></tr>
       <tr><td>Jo'nash sanasi / Дата отправления</td><td>_______________</td></tr>
       <tr><td>Qaytish sanasi / Дата возвращения</td><td>_______________</td></tr>
-      <tr><td>Turistlar soni / Количество туристов</td><td>_______________</td></tr>
+      <tr><td>Turistlar soni / Количество turiстов</td><td>_______________</td></tr>
       <tr><td>To'lov tartibi / Порядок оплаты</td><td>Shartnoma imzolangandan so'ng / После подписания договора</td></tr>
       <tr><td>Izoh / Примечание</td><td>${l.notes||'—'}</td></tr>
     </table>
@@ -1849,14 +1923,21 @@ async function saveLidEdit(){
 }
 
 async function deleteLid(){
-  if(!openLead)return;
+  const id=openLead||parseInt(document.getElementById('dp-title')?.dataset?.leadId||'0');
+  if(!id){notify('Lid topilmadi','error');return;}
+  openLead=id;
   document.getElementById('confirm-modal').classList.add('open');
 }
 
 async function confirmDelete(){
   closeModal('confirm-modal');
-  if(!openLead)return;
-  await sb.from('leads').delete().eq('id',openLead);
+  const id=openLead;
+  if(!id){notify('ID topilmadi','error');return;}
+  console.log('Deleting lead id:', id, 'user:', CP?.id, 'role:', CP?.role);
+  const{error,status}=await sb.from('leads').delete().eq('id',id);
+  console.log('Delete result:', {error,status});
+  if(error){notify('O\'chirishda xato: '+error.message+' ('+error.code+')','error');return;}
+  openLead=null;
   closeDetail();
   notify(lang==='uz'?'Lid o\'chirildi':'Лид удалён');
   if(page==='kanban')await renderKanban();
