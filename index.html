@@ -233,6 +233,8 @@ textarea.fi{resize:vertical;min-height:70px}
 .kpi-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
 .kpi-trend{font-size:11px;margin-top:3px}
 .kpi-trend.up{color:var(--green)}.kpi-trend.down{color:var(--red)}
+.card.dragging{opacity:0.4;transform:scale(0.97);border:2px dashed var(--green)!important}
+.kol.drag-over{background:var(--greenBg)!important;border:2px dashed var(--green)!important;transform:scale(1.01)}
 @media(max-width:768px){
   .sidebar{display:none}
   .mob-nav{display:block}
@@ -819,12 +821,12 @@ async function renderKanban(){
   </div><div class="kanban">`;
   STAGES.forEach(s=>{
     const items=leads.filter(l=>l.stage===s.id);
-    h+=`<div class="kol" ondrop="dropLid(event,'${s.id}')" ondragover="event.preventDefault()">
+    h+=`<div class="kol" ondrop="dropLid(event,'${s.id}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)">
       <div class="kol-head"><div class="kol-title"><div class="kol-dot" style="background:${s.color}"></div>${s.label}</div><div class="kol-count">${items.length}</div></div>`;
     if(!items.length)h+=`<div style="text-align:center;padding:20px 10px;color:var(--text3);font-size:12px">Lidlar yo'q</div>`;
     items.forEach(l=>{
       const age=Math.floor((new Date()-new Date(l.created_at))/86400000);
-      h+=`<div class="card" draggable="true" ondragstart="dragId=${l.id}" onclick="openLeadDetail(${l.id})">
+      h+=`<div class="card" draggable="true" ondragstart="startDrag(event,${l.id})" ondragend="endDrag(event)" onclick="openLeadDetail(${l.id})">
         <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px"><span class="prio-dot p-${l.priority||'warm'}"></span><div class="card-name">${esc(l.name)}</div></div>
         <div class="card-tour">${esc(l.tour||'')}</div>
         <div style="font-size:11px;color:var(--text3)">${esc(l.phone||'')}</div>
@@ -842,7 +844,34 @@ async function renderKanban(){
   h+=`</div>`;
   document.getElementById('main-content').innerHTML=h;
 }
-async function dropLid(e,stage){e.preventDefault();if(!dragId)return;await sb.from('leads').update({stage}).eq('id',dragId);dragId=null;await renderKanban()}
+function startDrag(e, id){
+  dragId=id;
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain', id);
+  setTimeout(()=>e.target.classList.add('dragging'), 0);
+}
+function endDrag(e){
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.kol').forEach(k=>k.classList.remove('drag-over'));
+}
+function dragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  e.currentTarget.classList.add('drag-over');
+}
+function dragLeave(e){
+  e.currentTarget.classList.remove('drag-over');
+}
+async function dropLid(e,stage){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const id=parseInt(e.dataTransfer.getData('text/plain')||dragId||'0');
+  if(!id)return;
+  dragId=null;
+  // Optimistic UI — sahifani qayta yuklamasdan kartani ko'chiramiz
+  await sb.from('leads').update({stage}).eq('id',id);
+  await renderKanban();
+}
 
 // --- LIST ---
 let sortState={col:'created_at',asc:false};
