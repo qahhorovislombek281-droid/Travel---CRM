@@ -286,7 +286,23 @@ textarea.fi{resize:vertical;min-height:70px}
           </div>
         </div>
         <button class="btn-primary" onclick="signIn()">Kirish →</button>
+        <div style="text-align:center;margin-top:12px">
+          <span onclick="showForgotForm()" style="font-size:12px;color:var(--text2);cursor:pointer;text-decoration:underline">Parolni unutdim</span>
+        </div>
       </div>
+
+      <!-- Parolni tiklash formasi -->
+      <div id="forgot-form" style="display:none">
+        <div style="text-align:center;font-size:24px;margin-bottom:8px">🔑</div>
+        <div style="font-size:14px;font-weight:600;text-align:center;margin-bottom:4px">Parolni tiklash</div>
+        <div style="font-size:12px;color:var(--text2);text-align:center;margin-bottom:16px">Emailingizga tiklash havolasi yuboriladi</div>
+        <div class="fg"><label class="fl">Email</label><input class="fi" id="reset-email" type="email" placeholder="email@example.com" onkeydown="if(event.key==='Enter')sendReset()"></div>
+        <button class="btn-primary" onclick="sendReset()">Havola yuborish →</button>
+        <div style="text-align:center;margin-top:12px">
+          <span onclick="showSigninForm()" style="font-size:12px;color:var(--text2);cursor:pointer;text-decoration:underline">← Kirish sahifasiga qaytish</span>
+        </div>
+      </div>
+
       <div class="err-msg" id="auth-err"></div>
       <div class="ok-msg" id="auth-ok"></div>
     </div>
@@ -531,6 +547,36 @@ function switchTab(tab){
 }
 function setBtnLoading(btn,loading){if(!btn)return;if(loading){btn.disabled=true;btn._orig=btn.innerHTML;btn.innerHTML='<div class="spinner" style="width:14px;height:14px;margin:0 auto"></div>'}else{btn.disabled=false;btn.innerHTML=btn._orig||''}}
 function showErr(m){const el=document.getElementById('auth-err');el.textContent=m;el.style.display='block';document.getElementById('auth-ok').style.display='none'}
+
+function showForgotForm(){
+  document.getElementById('signin-form').style.display='none';
+  document.getElementById('forgot-form').style.display='block';
+  document.getElementById('auth-err').style.display='none';
+  document.getElementById('auth-ok').style.display='none';
+  const em=document.getElementById('si-email').value;
+  if(em)document.getElementById('reset-email').value=em;
+}
+function showSigninForm(){
+  document.getElementById('forgot-form').style.display='none';
+  document.getElementById('signin-form').style.display='block';
+  document.getElementById('auth-err').style.display='none';
+  document.getElementById('auth-ok').style.display='none';
+}
+async function sendReset(){
+  const email=document.getElementById('reset-email').value.trim();
+  if(!email){showErr('Emailni kiriting');return}
+  const btn=document.querySelector('#forgot-form .btn-primary');
+  setBtnLoading(btn,true);
+  try{
+    const{error}=await sb.auth.resetPasswordForEmail(email,{
+      redirectTo: window.location.href
+    });
+    if(error){showErr(error.message);return}
+    showOk('Havola yuborildi! Emailingizni tekshiring 📧');
+    setTimeout(()=>showSigninForm(),3000);
+  }catch(e){showErr('Xatolik: '+e.message)}
+  finally{setBtnLoading(btn,false)}
+}
 function showOk(m){const el=document.getElementById('auth-ok');el.textContent=m;el.style.display='block';document.getElementById('auth-err').style.display='none'}
 
 async function signIn(){
