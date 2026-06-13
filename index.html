@@ -1637,14 +1637,9 @@ async function checkReminders(){
   });
   if(staleLeads.length>0){
     // Telegram ga eslatma
-    const msg=`⏰ <b>Eslatma!</b>
-
-${staleLeads.length} ta lid 3+ kun davomida yangilanmagan:
-`+
-      staleLeads.slice(0,5).map(l=>`• ${l.name}`).join('
-')+
-      (staleLeads.length>5?`
-...va yana ${staleLeads.length-5} ta`:'');
+    const msg=`⏰ <b>Eslatma!</b>\n\n${staleLeads.length} ta lid 3+ kun davomida yangilanmagan:\n`+
+      staleLeads.slice(0,5).map(l=>`• ${l.name}`).join('\n')+
+      (staleLeads.length>5?`\n...va yana ${staleLeads.length-5} ta`:'');
     // Faqat bir marta yuboramiz (session da flag)
     if(!sessionStorage.getItem('reminder_sent_'+now.toDateString())){
       sendTelegramMsg(msg);
