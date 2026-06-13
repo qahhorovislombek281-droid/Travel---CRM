@@ -821,12 +821,12 @@ async function renderKanban(){
   </div><div class="kanban">`;
   STAGES.forEach(s=>{
     const items=leads.filter(l=>l.stage===s.id);
-    h+=`<div class="kol" ondrop="dropLid(event,'${s.id}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)">
+    h+=`<div class="kol" data-stage="${s.id}" ondrop="dropLid(event,'${s.id}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)">
       <div class="kol-head"><div class="kol-title"><div class="kol-dot" style="background:${s.color}"></div>${s.label}</div><div class="kol-count">${items.length}</div></div>`;
     if(!items.length)h+=`<div style="text-align:center;padding:20px 10px;color:var(--text3);font-size:12px">Lidlar yo'q</div>`;
     items.forEach(l=>{
       const age=Math.floor((new Date()-new Date(l.created_at))/86400000);
-      h+=`<div class="card" draggable="true" ondragstart="startDrag(event,${l.id})" ondragend="endDrag(event)" onclick="openLeadDetail(${l.id})">
+      h+=`<div class="card" data-id="${l.id}" draggable="true" ondragstart="startDrag(event,${l.id})" ondragend="endDrag(event)" onclick="openLeadDetail(${l.id})">
         <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px"><span class="prio-dot p-${l.priority||'warm'}"></span><div class="card-name">${esc(l.name)}</div></div>
         <div class="card-tour">${esc(l.tour||'')}</div>
         <div style="font-size:11px;color:var(--text3)">${esc(l.phone||'')}</div>
@@ -862,15 +862,70 @@ function dragOver(e){
 function dragLeave(e){
   e.currentTarget.classList.remove('drag-over');
 }
-async function dropLid(e,stage){
+async function dropLid(e, stage){
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
-  const id=parseInt(e.dataTransfer.getData('text/plain')||dragId||'0');
-  if(!id)return;
-  dragId=null;
-  // Optimistic UI — sahifani qayta yuklamasdan kartani ko'chiramiz
-  await sb.from('leads').update({stage}).eq('id',id);
-  await renderKanban();
+  const id = parseInt(e.dataTransfer.getData('text/plain') || dragId || '0');
+  if(!id) return;
+  dragId = null;
+
+  // Kartani DOM da topamiz
+  const card = document.querySelector(`.card[data-id="${id}"]`);
+  const targetKol = e.currentTarget;
+
+  // Karta allaqachon shu kolonnadami?
+  if(card && card.closest('.kol') === targetKol) return;
+
+  // 1. Optimistic UI: kartani darhol ko'chiramiz (DB kutmasdan)
+  if(card){
+    card.style.transition = 'opacity .15s';
+    card.style.opacity = '0.5';
+    // Kolonnadagi kol-count ni yangilaymiz
+    const fromKol = card.closest('.kol');
+    if(fromKol){
+      const fromCount = fromKol.querySelector('.kol-count');
+      if(fromCount) fromCount.textContent = Math.max(0, parseInt(fromCount.textContent)-1);
+    }
+    // Maqsad kolonnaga ko'chiramiz
+    const insertBefore = targetKol.querySelector('.card') || null;
+    // Insertbefore — kol-head dan keyin
+    const kolBody = targetKol;
+    kolBody.appendChild(card);
+    card.style.opacity = '1';
+    // Maqsad kolonna count +1
+    const toCount = targetKol.querySelector('.kol-count');
+    if(toCount) toCount.textContent = parseInt(toCount.textContent) + 1;
+    // Stage badge yangilash
+    const stageBadge = card.querySelector('.card-src');
+    // Card tour subtextni yangilash shart emas
+  }
+
+  // 2. DB ga yozamiz (background)
+  const {error} = await sb.from('leads').update({stage}).eq('id', id);
+  if(error){
+    notify("Xatolik: " + error.message, 'error');
+    await renderKanban(); // xato bo'lsa qayta yuklaymiz
+    return;
+  }
+
+  // 3. Stats qatorini yangilaymiz (fon sahifani yangilamasdan)
+  updateKanbanStats();
+}
+
+function updateKanbanStats(){
+  const cols = document.querySelectorAll('.kol');
+  let total=0, newCount=0, dealCount=0;
+  cols.forEach(kol => {
+    const stage = kol.dataset.stage;
+    const count = parseInt(kol.querySelector('.kol-count')?.textContent || '0');
+    total += count;
+    if(stage === 'new') newCount = count;
+    if(stage === 'deal') dealCount = count;
+  });
+  const statVals = document.querySelectorAll('.stat-val');
+  if(statVals[0]) statVals[0].textContent = total;
+  if(statVals[1]) statVals[1].textContent = newCount;
+  if(statVals[2]) statVals[2].textContent = dealCount;
 }
 
 // --- LIST ---
