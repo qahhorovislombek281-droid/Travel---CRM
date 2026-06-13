@@ -1062,13 +1062,17 @@ async function deleteLid(){
   const id=openLead||parseInt(document.getElementById('dp-title')?.dataset?.leadId||'0');
   if(!id){notify('Lid topilmadi','error');return}
   openLead=id;
+  // ID ni modal ga ham yozamiz — backup sifatida
+  document.getElementById('confirm-modal').dataset.leadId=id;
   document.getElementById('confirm-modal').classList.add('open');
 }
 
 async function confirmDelete(){
+  // ID ni modalni yopishdan OLDIN olamiz
+  const id=openLead||parseInt(document.getElementById('confirm-modal').dataset.leadId||'0');
   closeModal('confirm-modal');
-  const id=openLead;
   if(!id){notify('ID topilmadi','error');return}
+  console.log('Deleting lead id:', id);
   const{error}=await sb.from('leads').delete().eq('id',id);
   if(error){notify("O'chirishda xato: "+error.message,'error');return}
   openLead=null;
