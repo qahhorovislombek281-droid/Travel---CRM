@@ -651,6 +651,19 @@ async function renderDashboard(){
       return{...p,monthLeads:ml.length,monthDeals:ml.filter(l=>l.stage==='deal').length,monthRev:ml.filter(l=>l.stage==='deal').reduce((a,l)=>a+(l.budget||0),0)};
     }).sort((a,b)=>b.monthDeals-a.monthDeals);
   }
+  // Stale leads
+  const staleArr=allLeads.filter(l=>['new','contact','offer'].includes(l.stage)&&(now-new Date(l.updated_at||l.created_at))/86400000>=3);
+  let staleHtml='';
+  if(staleArr.length){
+    staleHtml=`<div class="chart-card" style="margin-bottom:14px;border-left:3px solid var(--amber)">`;
+    staleHtml+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div class="chart-title" style="margin:0;color:var(--amber)">⏰ 3+ kun harakatsiz lidlar</div><span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--amberBg);color:var(--amber);font-weight:600">${staleArr.length} ta</span></div>`;
+    staleArr.slice(0,4).forEach(sl=>{
+      const days=Math.floor((now-new Date(sl.updated_at||sl.created_at))/86400000);
+      staleHtml+=`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openLeadDetail(${sl.id})"><span class="prio-dot p-${sl.priority||'warm'}"></span><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(sl.name)}</div><div style="font-size:11px;color:var(--text3)">${esc(sl.tour||'')} · ${sLabel(sl.stage)}</div></div><div style="font-size:11px;color:var(--amber);font-weight:600;flex-shrink:0">${days} kun</div></div>`;
+    });
+    if(staleArr.length>4)staleHtml+=`<div style="font-size:12px;color:var(--text3);text-align:center;margin-top:8px;cursor:pointer" onclick="navigate('mylist')">+${staleArr.length-4} ta ko'proq →</div>`;
+    staleHtml+='</div>';
+  }
   let h=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
     <div><div style="font-size:18px;font-weight:700">${t('goodmorning')}, ${CP.full_name.split(' ')[0]}! 👋</div>
     <div style="font-size:13px;color:var(--text2);margin-top:3px">${now.toLocaleDateString(lang==='uz'?'uz-UZ':'ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div>
@@ -729,25 +742,7 @@ async function renderDashboard(){
     </tr>`).join('')}
     </tbody></table></div>
   </div>`:''}
-  <!-- Stale leads eslatmasi -->
-  ${await (async()=>{
-    const stale=allLeads.filter(l=>['new','contact','offer'].includes(l.stage)&&(now-new Date(l.updated_at||l.created_at))/86400000>=3);
-    if(!stale.length) return '';
-    return `<div class="chart-card" style="margin-bottom:14px;border-left:3px solid var(--amber)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div class="chart-title" style="margin:0;color:var(--amber)">⏰ 3+ kun harakatsiz lidlar</div>
-        <span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--amberBg);color:var(--amber);font-weight:600">${stale.length} ta</span>
-      </div>
-      ${stale.slice(0,4).map(l=>{const days=Math.floor((now-new Date(l.updated_at||l.created_at))/86400000);return`
-        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openLeadDetail(${l.id})">
-          <span class="prio-dot p-${l.priority||'warm'}"></span>
-          <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.name)}</div>
-          <div style="font-size:11px;color:var(--text3)">${esc(l.tour||'')} · ${sLabel(l.stage)}</div></div>
-          <div style="font-size:11px;color:var(--amber);font-weight:600;flex-shrink:0">${days} kun</div>
-        </div>`}).join('')}
-      ${stale.length>4?`<div style="font-size:12px;color:var(--text3);text-align:center;margin-top:8px;cursor:pointer" onclick="navigate('mylist')">+${stale.length-4} ta ko'proq →</div>`:''}
-    </div>`;
-  })()}
+  ${staleHtml}
 
   <div class="chart-card">
     <div class="chart-title">Voronka holati (${monthName})</div>
@@ -890,6 +885,22 @@ async function renderDetailPanel(l){
     sb.from('payments').select('*,profiles(full_name)').eq('lead_id',l.id).order('created_at')
   ]);
   const stageOpts=STAGES.map(s=>`<option value="${s.id}"${s.id===l.stage?' selected':''}>${s.label}</option>`).join('');
+
+  // Mijoz tarixi — async IIFE ishlatmaslik uchun oldindan hisoblaymiz
+  const hist=await getClientHistory(l.phone,l.id);
+  let historyHtml='';
+  if(hist.length){
+    historyHtml=`<div class="dp-section"><div class="dp-section-title">🕐 Mijoz tarixi <span class="history-badge">📋 ${hist.length} ta avvalgi</span></div>`;
+    hist.forEach(hh=>{
+      historyHtml+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openLeadDetail(${hh.id})">
+        <span class="sbadge ${sCls(hh.stage)}" style="flex-shrink:0">${sLabel(hh.stage)}</span>
+        <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(hh.tour||'—')}</div>
+        <div style="font-size:11px;color:var(--text3)">${fmtDate(hh.created_at)} · $${(hh.budget||0).toLocaleString()}</div></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:var(--text3)"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>`;
+    });
+    historyHtml+='</div>';
+  }
   const typeIcon={comment:'💬',call:'📞',email:'📧'};
   const totalPrice=l.total_price||l.budget||0;
   const paidAmount=l.paid_amount||0;
@@ -958,22 +969,8 @@ async function renderDetailPanel(l){
   </div>
   ${agentSelect}
 
-  <!-- MIJOZ TARIXI -->
-  ${await (async()=>{
-    const hist=await getClientHistory(l.phone,l.id);
-    if(!hist.length) return '';
-    return `<div class="dp-section">
-      <div class="dp-section-title">🕐 Mijoz tarixi <span class="history-badge">📋 ${hist.length} ta avvalgi</span></div>
-      ${hist.map(h=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openLeadDetail(${h.id})">
-        <span class="sbadge ${sCls(h.stage)}" style="flex-shrink:0">${sLabel(h.stage)}</span>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h.tour||'—')}</div>
-          <div style="font-size:11px;color:var(--text3)">${fmtDate(h.created_at)} · $${(h.budget||0).toLocaleString()}</div>
-        </div>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="flex-shrink:0;color:var(--text3)"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>`).join('')}
-    </div>`;
-  })()}
+  <!-- MIJOZ TARIXI: renderDetailPanel da oldindan hisoblanadi -->
+  ${historyHtml}
 
   <div class="dp-section">
     <div class="dp-section-title" style="display:flex;justify-content:space-between;align-items:center">
