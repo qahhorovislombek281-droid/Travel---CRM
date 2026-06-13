@@ -381,7 +381,7 @@ textarea.fi{resize:vertical;min-height:70px}
     <div style="font-size:16px;font-weight:600;margin-bottom:8px">Lidni o'chirish</div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Bu lidni o'chirishni tasdiqlaysizmi? Bu amalni qaytarib bo'lmaydi.</div>
     <div style="display:flex;gap:8px">
-      <button class="btn" style="flex:1" onclick="closeModal('confirm-modal')">Bekor</button>
+      <button class="btn" style="flex:1" onclick="cancelDelete()">Bekor</button>
       <button class="btn" style="flex:1;background:var(--red);color:#fff;border-color:var(--red)" onclick="confirmDelete()">O'chirish</button>
     </div>
   </div>
@@ -1062,17 +1062,18 @@ async function deleteLid(){
   const id=openLead||parseInt(document.getElementById('dp-title')?.dataset?.leadId||'0');
   if(!id){notify('Lid topilmadi','error');return}
   openLead=id;
-  // ID ni modal ga ham yozamiz — backup sifatida
   document.getElementById('confirm-modal').dataset.leadId=id;
+  // Detail overlay ni vaqtincha yashiramiz — orqa fon hira ko'rinmasin
+  document.getElementById('detail-overlay').style.display='none';
   document.getElementById('confirm-modal').classList.add('open');
 }
 
 async function confirmDelete(){
-  // ID ni modalni yopishdan OLDIN olamiz
   const id=openLead||parseInt(document.getElementById('confirm-modal').dataset.leadId||'0');
   closeModal('confirm-modal');
+  // Detail overlay ni qayta tiklaymiz
+  document.getElementById('detail-overlay').style.display='';
   if(!id){notify('ID topilmadi','error');return}
-  console.log('Deleting lead id:', id);
   const{error}=await sb.from('leads').delete().eq('id',id);
   if(error){notify("O'chirishda xato: "+error.message,'error');return}
   openLead=null;
@@ -1081,6 +1082,12 @@ async function confirmDelete(){
   if(page==='kanban')await renderKanban();
   else if(page==='mylist'||page==='all-leads')await renderList(page==='mylist'&&CP.role!=='admin'?CP.id:null);
   else if(page==='dashboard')await renderDashboard();
+}
+
+function cancelDelete(){
+  closeModal('confirm-modal');
+  // Bekor qilinganda ham overlay ni tiklaymiz
+  document.getElementById('detail-overlay').style.display='';
 }
 
 // --- TASKS ---
