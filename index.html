@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Travel CRM</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -597,9 +598,19 @@ async function signIn(){
 
 async function loadUser(user){
   CU=user;
-  const{data:prof}=await sb.from('profiles').select('*').eq('id',user.id).single();
-  if(!prof){const n=user.user_metadata?.full_name||user.email;await sb.from('profiles').insert({id:user.id,full_name:n,role:'agent'});CP={id:user.id,full_name:n,role:'agent'}}
-  else CP=prof;
+  try{
+    const{data:prof,error}=await sb.from('profiles').select('*').eq('id',user.id).single();
+    if(error||!prof){
+      const n=user.user_metadata?.full_name||user.email;
+      await sb.from('profiles').insert({id:user.id,full_name:n,role:'agent'});
+      CP={id:user.id,full_name:n,role:'agent'};
+    } else {
+      CP=prof;
+    }
+  }catch(e){
+    const n=user.user_metadata?.full_name||user.email;
+    CP={id:user.id,full_name:n,role:'agent'};
+  }
   enterApp();
 }
 async function signOut(){await sb.auth.signOut();CU=null;CP=null;document.getElementById('app').classList.remove('active');document.getElementById('login').classList.add('active')}
@@ -1276,7 +1287,7 @@ async function addLid(){
 }
 
 async function openEditLid(){
-  const id=openLead||parseInt(document.getElementById('dp-title')?.dataset?.leadId||'0');
+  const id=openLead||document.getElementById('dp-title')?.dataset?.leadId;
   if(!id)return;
   const{data:l}=await sb.from('leads').select('*').eq('id',id).single();
   if(!l)return;
@@ -1291,7 +1302,7 @@ async function openEditLid(){
 }
 
 async function saveLidEdit(){
-  const id=openLead||parseInt(document.getElementById('dp-title')?.dataset?.leadId||'0');
+  const id=openLead||document.getElementById('dp-title')?.dataset?.leadId;
   if(!id){notify('Xatolik','error');return}
   const name=document.getElementById('ef-name').value.trim();
   if(!name){notify('Ism kiriting','error');return}
@@ -1309,7 +1320,7 @@ async function saveLidEdit(){
 }
 
 async function deleteLid(){
-  const id=openLead||parseInt(document.getElementById('dp-title')?.dataset?.leadId||'0');
+  const id=openLead||document.getElementById('dp-title')?.dataset?.leadId;
   if(!id){notify('Lid topilmadi','error');return}
   openLead=id;
   document.getElementById('confirm-modal').dataset.leadId=id;
@@ -1319,13 +1330,20 @@ async function deleteLid(){
 }
 
 async function confirmDelete(){
-  const id=openLead||parseInt(document.getElementById('confirm-modal').dataset.leadId||'0');
+  const id=openLead||document.getElementById('confirm-modal').dataset.leadId;
   closeModal('confirm-modal');
   // Detail overlay ni qayta tiklaymiz
   document.getElementById('detail-overlay').style.display='';
   if(!id){notify('ID topilmadi','error');return}
   const{error}=await sb.from('leads').delete().eq('id',id);
-  if(error){notify("O'chirishda xato: "+error.message,'error');return}
+  if(error){
+    if(error.code==='42501'||error.message.includes('policy')||error.message.includes('permission')){
+      notify("Ruxsat yo'q: Faqat admin o'chira oladi",'error');
+    } else {
+      notify("O'chirishda xato: "+error.message,'error');
+    }
+    return;
+  }
   openLead=null;
   closeDetail();
   notify("Lid o'chirildi");
