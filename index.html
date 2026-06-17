@@ -590,10 +590,14 @@ async function signIn(){
   setBtnLoading(btn,true);
   try{
     const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error){showErr(lang==='uz'?"Login yoki parol noto'g'ri":"Неверный логин или пароль");return}
+    if(error){showErr(lang==='uz'?"Login yoki parol noto'g'ri":"Неверный логин или пароль");setBtnLoading(btn,false);return}
     await loadUser(data.user);
-  }catch(e){showErr("Internet bilan muammo. Qayta urinib ko'ring.")}
-  finally{setBtnLoading(btn,false)}
+    setBtnLoading(btn,false);
+  }catch(e){
+    console.error('signIn error:',e);
+    showErr("Xatolik: "+(e?.message||'Nomalum xato'));
+    setBtnLoading(btn,false);
+  }
 }
 
 async function loadUser(user){
@@ -608,10 +612,16 @@ async function loadUser(user){
       CP=prof;
     }
   }catch(e){
+    console.error('loadUser profile error:',e);
     const n=user.user_metadata?.full_name||user.email;
     CP={id:user.id,full_name:n,role:'agent'};
   }
-  enterApp();
+  try{
+    enterApp();
+  }catch(e){
+    console.error('enterApp error:',e);
+    showErr('Ilovani yuklashda xato: '+(e?.message||'nomalum'));
+  }
 }
 async function signOut(){await sb.auth.signOut();CU=null;CP=null;document.getElementById('app').classList.remove('active');document.getElementById('login').classList.add('active')}
 
