@@ -289,6 +289,8 @@ textarea.fi{resize:vertical;min-height:70px}
           </div>
         </div>
         <button class="btn-primary" onclick="signIn()">Kirish →</button>
+        <button class="btn-primary" style="margin-top:8px;background:#f59e0b" onclick="debugBypass()">🔧 Debug: to'g'ridan-to'g'ri kirish</button>
+        <div id="debug-log" style="margin-top:10px;font-size:11px;color:var(--text2);white-space:pre-wrap;max-height:200px;overflow-y:auto;font-family:monospace"></div>
         <div style="text-align:center;margin-top:12px">
           <span onclick="showForgotForm()" style="font-size:12px;color:var(--text2);cursor:pointer;text-decoration:underline">Parolni unutdim</span>
         </div>
@@ -603,6 +605,59 @@ async function signIn(){
     console.error('signIn error:',e);
     showErr("Xatolik: "+(e?.message||'Nomalum xato'));
     setBtnLoading(btn,false);
+  }
+}
+
+function dlog(msg){
+  const el=document.getElementById('debug-log');
+  if(el)el.textContent+=msg+'\n';
+  console.log('[DEBUG]',msg);
+}
+
+async function debugBypass(){
+  const el=document.getElementById('debug-log');
+  if(el)el.textContent='';
+  dlog('1. Boshlandi...');
+  try{
+    dlog('2. getSession chaqirilmoqda...');
+    const{data:sessData,error:sessErr}=await sb.auth.getSession();
+    dlog('3. getSession natija: '+JSON.stringify({hasSession:!!sessData?.session,err:sessErr?.message}));
+    let user=sessData?.session?.user;
+    if(!user){
+      dlog('4. Session yo\'q, signInWithPassword orqali kiramiz...');
+      const email=document.getElementById('si-email').value.trim()||'admin@clubtravel.uz';
+      const pass=document.getElementById('si-pass').value||'Admin12345';
+      const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+      dlog('5. signIn natija: '+JSON.stringify({hasUser:!!data?.user,err:error?.message}));
+      if(error){dlog('XATO: '+error.message);return}
+      user=data.user;
+    }
+    dlog('6. User topildi: '+user.email+' (id: '+user.id+')');
+    dlog('7. Profiles jadvalidan o\'qilmoqda...');
+    const profPromise=sb.from('profiles').select('*').eq('id',user.id).single();
+    const profResult=await Promise.race([
+      profPromise,
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('TIMEOUT 8s')),8000))
+    ]);
+    dlog('8. Profiles natija: '+JSON.stringify(profResult));
+    CU=user;
+    CP=profResult.data||{id:user.id,full_name:user.email,role:'admin'};
+    dlog('9. CP o\'rnatildi: '+JSON.stringify(CP));
+    dlog('10. enterApp chaqirilmoqda...');
+    document.getElementById('login').classList.remove('active');
+    document.getElementById('app').classList.add('active');
+    dlog('11. Ekran almashtirildi. updateSidebarAvatar...');
+    updateSidebarAvatar();
+    document.getElementById('ui-name').textContent=CP.full_name;
+    document.getElementById('ui-role').textContent=CP.role==='admin'?t('admin'):t('agent');
+    dlog('12. buildNav...');
+    buildNav();
+    dlog('13. navigate(dashboard) chaqirilmoqda...');
+    await navigate('dashboard');
+    dlog('14. TUGADI! Hammasi ishladi.');
+  }catch(e){
+    dlog('CATCH XATO: '+(e?.message||e));
+    console.error('debugBypass full error:',e);
   }
 }
 
