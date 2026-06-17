@@ -289,8 +289,6 @@ textarea.fi{resize:vertical;min-height:70px}
           </div>
         </div>
         <button class="btn-primary" onclick="signIn()">Kirish →</button>
-        <button class="btn-primary" style="margin-top:8px;background:#f59e0b" onclick="debugBypass()">🔧 Debug: to'g'ridan-to'g'ri kirish</button>
-        <div id="debug-log" style="margin-top:10px;font-size:11px;color:var(--text2);white-space:pre-wrap;max-height:200px;overflow-y:auto;font-family:monospace"></div>
         <div style="text-align:center;margin-top:12px">
           <span onclick="showForgotForm()" style="font-size:12px;color:var(--text2);cursor:pointer;text-decoration:underline">Parolni unutdim</span>
         </div>
@@ -487,6 +485,20 @@ textarea.fi{resize:vertical;min-height:70px}
 <script>
 const SUPA_URL='https://wyoidilxdbtirzgaxipo.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5b2lkaWx4ZGJ0aXJ6Z2F4aXBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNTU5ODEsImV4cCI6MjA5NDgzMTk4MX0.TXioAlvrjIGjwQIYeqZIlOkIxdg_Q4hSq6mnAzU0xyc';
+// Buzilgan/eski auth tokenni avtomatik tozalash
+(function(){
+  try{
+    const flag=sessionStorage.getItem('sb_token_checked');
+    if(!flag){
+      Object.keys(localStorage).forEach(k=>{
+        if(k.startsWith('sb-')&&k.includes('auth-token')){
+          localStorage.removeItem(k);
+        }
+      });
+      sessionStorage.setItem('sb_token_checked','1');
+    }
+  }catch(e){}
+})();
 const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
 const TG_TOKEN='8689616238:AAEMErEFtoR4YDOGTBisIFIclumqvK_zeoo';
