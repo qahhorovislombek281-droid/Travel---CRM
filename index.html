@@ -588,12 +588,18 @@ async function signIn(){
   if(!email||!pass){showErr('Email va parolni kiriting');return}
   const btn=document.querySelector('#signin-form .btn-primary');
   setBtnLoading(btn,true);
+  const timeoutId=setTimeout(()=>{
+    setBtnLoading(btn,false);
+    showErr("So'rov juda uzoq davom etdi. Internetni tekshirib, qayta urinib ko'ring.");
+  },15000);
   try{
     const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    clearTimeout(timeoutId);
     if(error){showErr(lang==='uz'?"Login yoki parol noto'g'ri":"Неверный логин или пароль");setBtnLoading(btn,false);return}
     await loadUser(data.user);
     setBtnLoading(btn,false);
   }catch(e){
+    clearTimeout(timeoutId);
     console.error('signIn error:',e);
     showErr("Xatolik: "+(e?.message||'Nomalum xato'));
     setBtnLoading(btn,false);
@@ -617,7 +623,7 @@ async function loadUser(user){
     CP={id:user.id,full_name:n,role:'agent'};
   }
   try{
-    enterApp();
+    await enterApp();
   }catch(e){
     console.error('enterApp error:',e);
     showErr('Ilovani yuklashda xato: '+(e?.message||'nomalum'));
@@ -625,14 +631,16 @@ async function loadUser(user){
 }
 async function signOut(){await sb.auth.signOut();CU=null;CP=null;document.getElementById('app').classList.remove('active');document.getElementById('login').classList.add('active')}
 
-function enterApp(){
+async function enterApp(){
   document.getElementById('login').classList.remove('active');
   document.getElementById('app').classList.add('active');
   updateSidebarAvatar();
   document.getElementById('ui-name').textContent=CP.full_name;
   document.getElementById('ui-role').textContent=CP.role==='admin'?t('admin'):t('agent');
   const lb=document.getElementById('lang-btn');if(lb)lb.textContent=lang==='uz'?'🇷🇺 RU':'🇺🇿 UZ';
-  buildNav();navigate('dashboard');startAutoRefresh();startRealtime();
+  buildNav();
+  await navigate('dashboard');
+  startAutoRefresh();startRealtime();
   sb.from('profiles').update({last_login:new Date().toISOString()}).eq('id',CP.id).then(()=>{});
 }
 function updateSidebarAvatar(){
